@@ -22,8 +22,11 @@ class MainActivity : AppCompatActivity(), LocationListener, GpsStatus.Listener {
 
     private var onGpsServiceUpdate: OnGpsServiceUpdate? = null
     private lateinit var mLocationManager: LocationManager
-    private lateinit var data: Data
     private lateinit var sharedPreferences: SharedPreferences
+
+    companion object {
+        lateinit var data: Data
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -115,6 +118,8 @@ class MainActivity : AppCompatActivity(), LocationListener, GpsStatus.Listener {
                 SpannableString(java.lang.String.format(Locale.ENGLISH, "%.0f %s", speed, units))
             s.setSpan(RelativeSizeSpan(0.25f), s.length - units.length - 1, s.length, 0)
             //currentSpeed.setText(s)
+            Log.d("xxx", speed.toString())
+            Log.d("xxx", s.toString())
         }
     }
 
