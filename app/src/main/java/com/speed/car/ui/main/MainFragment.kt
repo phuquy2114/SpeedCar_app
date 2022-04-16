@@ -7,7 +7,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
-import android.location.Location
 import android.location.*
 import android.location.LocationListener
 import android.os.Build
@@ -39,7 +38,6 @@ import com.speed.car.notification.NotificationChannelType
 import com.speed.car.notification.NotificationContent
 import com.speed.car.notification.NotificationRepository
 import com.speed.car.services.GpsServices
-import org.koin.androidx.viewmodel.ext.android.stateViewModel
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.util.*
@@ -201,7 +199,7 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
 
         addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
         viewModel.onLocationChangeSpeed(location)
-        Log.d("xxx","address line ${addresses[0].getAddressLine(0)}")
+        Log.d("xxx", "address line ${addresses[0].getAddressLine(0)}")
     }
 
     private fun onGrantPermissionNeeded() {
@@ -265,7 +263,10 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
         }
         viewModel.isOverSpeedLimit.observe(viewLifecycleOwner) {
             if (it.first) {
-                val channelDetail = ChannelDetail(NotificationChannelType.SPEED_CAR, NotificationManager.IMPORTANCE_MAX)
+                val channelDetail = ChannelDetail(
+                    NotificationChannelType.SPEED_CAR,
+                    NotificationManager.IMPORTANCE_MAX
+                )
                 val notificationContent =
                     NotificationContent(1234, "Speed Warning", "Your current speed is ${it.second}")
                 notificationRepository.sendNotification(channelDetail, notificationContent)
@@ -279,7 +280,9 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
         val geocoder = Geocoder(this.context, Locale.getDefault())
 
         addresses = geocoder.getFromLocation(lastLocation.latitude, lastLocation.longitude, 1)
-        viewModel.checkSpeedLimit(addresses[0].thoroughfare)
+        addresses.first().thoroughfare?.let {
+            viewModel.checkSpeedLimit(it)
+        }
         for (location in locationResult.locations) {
             with(location) {
                 val current = LatLng(this.latitude, this.longitude)
