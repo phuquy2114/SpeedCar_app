@@ -13,17 +13,17 @@ import kotlinx.coroutines.tasks.await
 class FirestoreRepositoryImpl(
     private val fireStore: FirebaseFirestore,
 ) : FirestoreRepository {
-
-    override suspend fun getSOSPeopleByAddress(address: String): List<SOSPeople> {
-        return fireStore.collection("SOSPeople")
-            .whereEqualTo("address", address)
+    override suspend fun getSOSPeopleByAddress(address: String): Flow<List<SOSPeople>?> = flow {
+        fireStore.collection("SOSPeople")
+            .whereGreaterThanOrEqualTo("address", address)
             .get()
             .await()
             .toListOrEmpty(SOSPeople::class.java) {
                 id = it.id
+            }.also {
+                emit(it)
             }
-
-    }
+    }.catch { emit(emptyList()) }
 
     override suspend fun getSpeedAddressByAddress(address: String): Flow<SpeedAddress?> = flow {
         fireStore.collection("SpeedAddress")

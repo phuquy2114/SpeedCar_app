@@ -8,10 +8,10 @@ import androidx.lifecycle.map
 import androidx.lifecycle.viewModelScope
 import com.bitkey.workhub.utils.SingleLiveEvent
 import com.speed.car.core.BaseViewModel
-import com.speed.car.utils.SharedPreferencesH
-import kotlinx.coroutines.launch
 import com.speed.car.firestore.FirestoreRepository
+import com.speed.car.utils.SharedPreferencesH
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 
 class MainViewModel(
@@ -71,16 +71,15 @@ class MainViewModel(
             }
         }
     }
+
     val navigateToHistory = SingleLiveEvent<Boolean>()
 
     init {
-
         launchCoroutine {
             Log.d("TAGGG", "init : ")
 
-            fireStoreRepository.getSpeedAddressByAddress("Điện Biên Phủ").collectLatest {
+            fireStoreRepository.getSOSPeopleByAddress("Trạm").collectLatest {
                 Log.d("TAGGG", "response :$it ")
-
             }
         }
     }

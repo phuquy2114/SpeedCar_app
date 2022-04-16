@@ -5,6 +5,6 @@ import com.speed.car.model.SpeedAddress
 import kotlinx.coroutines.flow.Flow
 
 interface FirestoreRepository {
-    suspend fun getSOSPeopleByAddress(address: String): List<SOSPeople>?
+    suspend fun getSOSPeopleByAddress(address: String): Flow<List<SOSPeople>?>
     suspend fun getSpeedAddressByAddress(address: String): Flow<SpeedAddress?>
 }
