@@ -14,6 +14,9 @@ import android.os.Looper
 import android.text.SpannableString
 import android.text.style.RelativeSizeSpan
 import android.util.Log
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
@@ -29,7 +32,6 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.speed.car.R
 import com.speed.car.core.BaseFragment
-import com.speed.car.core.utils.observe
 import com.speed.car.databinding.FragmentMainBinding
 import com.speed.car.interfaces.OnGpsServiceUpdate
 import com.speed.car.model.Data
@@ -70,13 +72,9 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
     override val viewModel: MainViewModel by viewModel()
 
     override fun getViewBinding(): FragmentMainBinding = FragmentMainBinding.inflate(layoutInflater)
-    override fun observeViewModel() {
-        observe(viewModel.navigateToHistory) {
-            findNavController().navigate(R.id.action_mainFragment_to_historyFragment)
-        }
-    }
 
     override fun viewBinding() {
+        setHasOptionsMenu(true)
         binding.viewModel = viewModel
         binding.lifecycleOwner = this
         initMap()
@@ -142,6 +140,28 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
     override fun onStart() {
         super.onStart()
         onGrantPermissionNeeded()
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        inflater.inflate(R.menu.menu_toolbar, menu)
+
+        super.onCreateOptionsMenu(menu, inflater)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        val id = item.itemId
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_history) {
+            findNavController().navigate(R.id.action_mainFragment_to_historyFragment)
+            return true
+        }
+//
+//      if(id == R.id.action_search){
+//          Toast.makeText(getApplicationContext(), "Search action is selected!", Toast.LENGTH_SHORT).show();
+//          return true;
+//      }
+        return super.onOptionsItemSelected(item)
     }
 
     override fun onResume() {

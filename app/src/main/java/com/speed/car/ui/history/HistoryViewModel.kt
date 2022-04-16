@@ -1,12 +1,14 @@
 package com.speed.car.ui.history
 
 import androidx.databinding.ObservableArrayList
+import com.bitkey.workhub.utils.SingleLiveEvent
 import com.speed.car.core.BaseViewModel
 import com.speed.car.model.History
 import java.util.*
 
 class HistoryViewModel : BaseViewModel() {
     val histories = ObservableArrayList<History>()
+    val back = SingleLiveEvent<Boolean>()
 
     init {
         histories.addAll(
@@ -18,4 +20,7 @@ class HistoryViewModel : BaseViewModel() {
         )
     }
 
+    fun back() {
+        back.postValue(true)
+    }
 }

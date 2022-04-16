@@ -20,7 +20,6 @@ class MainViewModel(
 ) : BaseViewModel() {
     val currentSpeed = MutableLiveData<Pair<Float, String>>()
     val currentAcc = MutableLiveData<Pair<Float, String>>()
-
     private var currentLocation: Location? = null
     val speedLimitCurrent = MutableLiveData<Int?>()
     val isOverSpeedLimit: LiveData<Pair<Boolean, Float>> = currentSpeed.map {
@@ -36,6 +35,16 @@ class MainViewModel(
     }
 
     private var currentWayName: String? = null
+
+    init {
+        launchCoroutine {
+            Log.d("TAGGG", "init : ")
+
+            fireStoreRepository.getSOSPeopleByAddress("Trạm").collectLatest {
+                Log.d("TAGGG", "response :$it ")
+            }
+        }
+    }
 
     fun onLocationChangeSpeed(location: Location) {
         currentLocation = location
@@ -70,21 +79,5 @@ class MainViewModel(
                 currentWayName = wayName
             }
         }
-    }
-
-    val navigateToHistory = SingleLiveEvent<Boolean>()
-
-    init {
-        launchCoroutine {
-            Log.d("TAGGG", "init : ")
-
-            fireStoreRepository.getSOSPeopleByAddress("Trạm").collectLatest {
-                Log.d("TAGGG", "response :$it ")
-            }
-        }
-    }
-
-    fun navigateToHistory() {
-        navigateToHistory.postValue(true)
     }
 }

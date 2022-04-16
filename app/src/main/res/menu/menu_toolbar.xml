@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:mayApp="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/action_history"
+        mayApp:showAsAction="always"
+        android:icon="@drawable/ic_baseline_speed_24"
+        android:title="History" />
+</menu>

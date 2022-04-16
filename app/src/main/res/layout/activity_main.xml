@@ -11,6 +11,31 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:fitsSystemWindows="true">
+<!--        &lt;!&ndash; This LinearLayout represents the contents of the screen  &ndash;&gt;-->
+<!--        <LinearLayout-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="match_parent"-->
+<!--            android:orientation="vertical">-->
+
+<!--            &lt;!&ndash; The ActionBar displayed at the top &ndash;&gt;-->
+<!--            <androidx.appcompat.widget.Toolbar-->
+<!--                android:id="@+id/toolbar"-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:background="?attr/colorPrimaryDark"-->
+<!--                android:fitsSystemWindows="true"-->
+<!--                android:minHeight="?attr/actionBarSize"-->
+<!--                app:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">-->
+
+<!--            </androidx.appcompat.widget.Toolbar>-->
+
+<!--            &lt;!&ndash; The main content view where fragments are loaded &ndash;&gt;-->
+<!--            <FrameLayout-->
+<!--                android:id="@+id/flContent"-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="match_parent"-->
+<!--                app:layout_behavior="@string/appbar_scrolling_view_behavior" />-->
+<!--        </LinearLayout>-->
 
         <androidx.fragment.app.FragmentContainerView
             android:id="@+id/fragmentContainerView"
@@ -25,7 +50,8 @@
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_gravity="start"
-            android:fitsSystemWindows="true" />
+            android:fitsSystemWindows="true"
+            app:menu="@menu/drawer_menu" />
     </androidx.drawerlayout.widget.DrawerLayout>
 
 </layout>
