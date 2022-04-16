@@ -11,7 +11,7 @@ class HistoryFragment : BaseFragment<HistoryViewModel, FragmentHistoryBinding>()
         FragmentHistoryBinding.inflate(layoutInflater)
 
     override fun viewBinding() {
-
+        binding.viewModel = viewModel
     }
 
 }

@@ -1,14 +1,16 @@
 package com.speed.car.core
 
 import android.app.Application
+import android.os.Bundle
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
-import com.speed.car.utils.SingleEvent
 import com.bitkey.workhub.utils.SingleLiveEvent
 import com.speed.car.model.Permission
 import com.speed.car.network.ErrorResponse
 import com.speed.car.network.ResponseWrapper
+import com.speed.car.utils.SingleEvent
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import org.koin.java.KoinJavaComponent
@@ -59,5 +61,13 @@ abstract class BaseViewModel : ViewModel() {
         error: ErrorResponse? = null
     ) {
         this?.invoke(code, error)
+    }
+    protected fun launchCoroutine(
+        dispatcher: CoroutineDispatcher = Dispatchers.IO,
+        block: suspend CoroutineScope.() -> Unit
+    ): Job {
+        return viewModelScope.launch(coroutineExceptionHandler + dispatcher) {
+            block()
+        }
     }
 }
