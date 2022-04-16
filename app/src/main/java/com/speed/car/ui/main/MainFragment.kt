@@ -14,10 +14,14 @@ import android.os.Looper
 import android.text.SpannableString
 import android.text.style.RelativeSizeSpan
 import android.util.Log
+import android.view.MenuItem
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.ActionBarDrawerToggle
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.view.GravityCompat
 import androidx.preference.PreferenceManager
 import com.google.android.gms.location.*
 import com.google.android.gms.location.LocationRequest
@@ -26,6 +30,7 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.material.navigation.NavigationView
 import com.speed.car.R
 import com.speed.car.core.BaseFragment
 import com.speed.car.databinding.FragmentMainBinding
@@ -42,7 +47,7 @@ import java.util.*
 
 
 class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), LocationListener,
-    OnMapReadyCallback {
+    OnMapReadyCallback, NavigationView.OnNavigationItemSelectedListener {
     private val defaultZoom = 20.0f
     private var onGpsServiceUpdate: OnGpsServiceUpdate? = null
     private lateinit var mMap: GoogleMap
@@ -68,11 +73,11 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
     override val viewModel: MainViewModel by viewModel()
 
     override fun getViewBinding(): FragmentMainBinding = FragmentMainBinding.inflate(layoutInflater)
+    private var mDrawerToggle: ActionBarDrawerToggle? = null
 
     override fun viewBinding() {
         binding.viewModel = viewModel
-        binding.lifecycleOwner = this
-        initMap()
+        initViews()
         observers()
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(requireActivity())
         data = Data(onGpsServiceUpdate)
@@ -186,13 +191,21 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
     }
 
     override fun onLocationChanged(location: Location) {
-        val geocoder: Geocoder
         val addresses: List<Address>
-        geocoder = Geocoder(this.context, Locale.getDefault())
-
+        val geocoder = Geocoder(this.context, Locale.getDefault())
         addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
         viewModel.onLocationChangeSpeed(location)
         Log.d("xxx","address line ${addresses[0].getAddressLine(0)}")
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            android.R.id.home -> {
+                binding.drawerLayout.openDrawer(GravityCompat.START)
+                return true
+            }
+        }
+        return super.onOptionsItemSelected(item)
     }
 
     private fun onGrantPermissionNeeded() {
@@ -243,10 +256,25 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
         getDeviceLocation()
     }
 
-    private fun initMap() {
+    private fun initViews() {
+        setHasOptionsMenu(true)
         val mapFragment =
             childFragmentManager.findFragmentById(R.id.mapFragment) as SupportMapFragment
         mapFragment.getMapAsync(this)
+        (requireActivity() as? AppCompatActivity)?.let {
+            it.supportActionBar?.apply {
+                setDisplayHomeAsUpEnabled(true)
+            }
+        }
+        mDrawerToggle = ActionBarDrawerToggle(
+            requireActivity(),
+            binding.drawerLayout,
+            R.string.drawer_open,
+            R.string.drawer_close
+        )
+        mDrawerToggle?.syncState()
+        binding.drawerLayout.addDrawerListener(mDrawerToggle!!)
+        binding.navigationDrawer.bringToFront()
     }
 
     private fun observers() {
@@ -324,5 +352,9 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
 
     private fun showGpsDisabledDialog() {
         startActivity(Intent("android.settings.LOCATION_SOURCE_SETTINGS"))
+    }
+
+    override fun onNavigationItemSelected(item: MenuItem): Boolean {
+        return false
     }
 }

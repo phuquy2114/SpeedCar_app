@@ -24,6 +24,8 @@ class MainViewModel(
         (it.first > limit) to it.first
     }
 
+    val isEnableSOS = MutableLiveData(false)
+
     val isVisibleLimit = speedLimitCurrent.map {
         it != null
     }

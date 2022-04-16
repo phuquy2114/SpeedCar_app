@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="TextWithSwitchView">
+        <attr name="twsv_text" format="reference" />
+        <attr name="twsv_sub_text" format="reference" />
+        <attr name="twsv_checked" format="boolean" />
+        <attr name="twsv_background" format="reference" />
+        <attr name="twsv_top_divider_visibility" format="boolean" />
+        <attr name="twsv_top_divider_margin_start_visibility" format="boolean" />
+        <attr name="twsv_bottom_divider_visibility" format="boolean" />
+        <attr name="twsv_bottom_divider_margin_start_visibility" format="boolean" />
+    </declare-styleable>
+</resources>
