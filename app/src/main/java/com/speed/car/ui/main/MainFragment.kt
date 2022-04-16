@@ -69,6 +69,7 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
 
     override fun viewBinding() {
         binding.viewModel = viewModel
+        binding.lifecycleOwner = this
         initMap()
         observers()
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(requireActivity())

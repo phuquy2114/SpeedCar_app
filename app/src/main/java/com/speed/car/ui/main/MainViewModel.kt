@@ -17,14 +17,22 @@ class MainViewModel(
     val currentSpeed = MutableLiveData<Pair<Float, String>>()
     val currentAcc = MutableLiveData<Pair<Float, String>>()
 
-    var currentLocation: Location? = null
-    var speedLimitCurrent: Int? = null
+    private var currentLocation: Location? = null
+    val speedLimitCurrent = MutableLiveData<Int?>()
     val isOverSpeedLimit: LiveData<Pair<Boolean, Float>> = currentSpeed.map {
-        val limit = speedLimitCurrent ?: return@map false to it.first
+        val limit = speedLimitCurrent.value ?: return@map false to it.first
         (it.first > limit) to it.first
     }
 
+    val isVisibleLimit = speedLimitCurrent.map {
+        it != null
+    }
+    val speedLimitCurrentStr = speedLimitCurrent.map {
+        it.toString()
+    }
+
     init {
+        speedLimitCurrent.postValue(40)
         viewModelScope.launch {
             //TODO get api speed limit
         }

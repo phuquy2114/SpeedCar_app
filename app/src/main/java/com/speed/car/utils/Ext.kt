@@ -1,6 +1,7 @@
 package com.speed.car.utils
 
 import android.view.View
+import androidx.databinding.BindingAdapter
 
 fun Any?.isNotNull(): Boolean = this != null
 fun Any?.isNull(): Boolean = this == null
@@ -19,4 +20,11 @@ internal fun View.gone() {
 
 internal fun View.showOrGone(isGone: Boolean) {
     if (!isGone) show() else gone()
+}
+
+fun Boolean?.orFalse() = this ?: false
+
+@BindingAdapter("visible_or_gone")
+fun View.setVisibleOrGone(isVisible: Boolean?) {
+    visibility = if (isVisible.orFalse()) View.VISIBLE else View.GONE
 }
