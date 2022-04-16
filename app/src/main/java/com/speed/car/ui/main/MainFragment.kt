@@ -12,16 +12,19 @@ import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
+import android.os.Looper
 import android.text.SpannableString
 import android.text.style.RelativeSizeSpan
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.getSystemService
 import androidx.preference.PreferenceManager
-import com.google.android.gms.location.FusedLocationProviderClient
+import com.github.anastr.speedviewlib.AwesomeSpeedometer
+import com.google.android.gms.location.*
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -30,7 +33,6 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.speed.car.R
 import com.speed.car.core.BaseFragment
-import com.speed.car.databinding.FragmentHistoryBinding
 import com.speed.car.databinding.FragmentMainBinding
 import com.speed.car.interfaces.OnGpsServiceUpdate
 import com.speed.car.model.Data
@@ -39,7 +41,8 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.util.*
 
 class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), LocationListener,
-    GpsStatus.Listener, OnMapReadyCallback {
+    OnMapReadyCallback {
+    private val defaultZoom = 16.0f
     private var onGpsServiceUpdate: OnGpsServiceUpdate? = null
     private lateinit var mMap: GoogleMap
     private lateinit var mLocationManager: LocationManager
@@ -52,6 +55,8 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
 
     // location retrieved by the Fused Location Provider.
     private var lastKnownLocation: Location? = null
+
+    private lateinit var locationCallback: LocationCallback
 
     companion object {
         lateinit var data: Data
@@ -67,7 +72,15 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
         initMap()
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(requireActivity())
         data = Data(onGpsServiceUpdate)
-        mLocationManager = activity?.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        mLocationManager =
+            requireActivity().getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        fusedLocationProviderClient =
+            LocationServices.getFusedLocationProviderClient(requireActivity())
+        locationCallback = object : LocationCallback() {
+            override fun onLocationResult(locationResult: LocationResult) {
+                markCurrentLocation(locationResult)
+            }
+        }
         onGpsServiceUpdate = object : OnGpsServiceUpdate {
             override fun update() {
                 Log.d("xxx", "update: ")
@@ -100,20 +113,19 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
                 var s = SpannableString(String.format("%.0f %s", maxSpeedTemp, speedUnits))
                 s.setSpan(RelativeSizeSpan(0.5f), s.length - speedUnits.length - 1, s.length, 0)
                 // maxSpeed.setText(s)
-
+                Toast.makeText(activity, "maxSpeed $s", Toast.LENGTH_SHORT).show()
                 s = SpannableString(String.format("%.0f %s", averageTemp, speedUnits))
                 s.setSpan(RelativeSizeSpan(0.5f), s.length - speedUnits.length - 1, s.length, 0)
                 // averageSpeed.setText(s)
-
+                Toast.makeText(activity, s.toString(), Toast.LENGTH_SHORT).show()
                 s = SpannableString(String.format("%.3f %s", distanceTemp, distanceUnits))
                 s.setSpan(RelativeSizeSpan(0.5f), s.length - distanceUnits.length - 1, s.length, 0)
                 // distance.setText(s)
+                Toast.makeText(activity, s.toString(), Toast.LENGTH_SHORT).show()
             }
 
         }
-
         data = Data(onGpsServiceUpdate)
-        mLocationManager = activity?.getSystemService(Context.LOCATION_SERVICE) as LocationManager
     }
 
     override fun onStart() {
@@ -143,7 +155,7 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
         }
 
         if (!mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-            showGpsDisabledDialog();
+            showGpsDisabledDialog()
         }
 ///////
         if (ActivityCompat.checkSelfPermission(
@@ -153,7 +165,16 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
         ) {
             return
         }
-        mLocationManager.addGpsStatusListener(this);
+        val currentLocationRequest = LocationRequest()
+        currentLocationRequest.setInterval(500)
+            .setFastestInterval(0)
+            .setMaxWaitTime(0)
+            .setSmallestDisplacement(0F).priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+        fusedLocationProviderClient.requestLocationUpdates(
+            currentLocationRequest,
+            locationCallback,
+            Looper.getMainLooper()
+        )
     }
 
     ////
@@ -191,25 +212,12 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
                 SpannableString(java.lang.String.format(Locale.ENGLISH, "%.0f %s", speed, units))
             s.setSpan(RelativeSizeSpan(0.25f), s.length - units.length - 1, s.length, 0)
             //currentSpeed.setText(s)
+            binding.viewSpeed.speedTo(speed = speed.toFloat())
+            Toast.makeText(activity, "current speed $s", Toast.LENGTH_SHORT).show()
             Log.d("xxx", speed.toString())
             Log.d("xxx", s.toString())
         }
     }
-
-    override fun onGpsStatusChanged(event: Int) {
-        when (event) {
-            GpsStatus.GPS_EVENT_SATELLITE_STATUS -> {
-                Log.d("xxx", "onGpsStatusChanged: ")
-            }
-            GpsStatus.GPS_EVENT_STOPPED -> if (!mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-                Log.d("xxx", "onGpsStatusChanged: ")
-            }
-            GpsStatus.GPS_EVENT_FIRST_FIX -> {
-                Log.d("xxx", "onGpsStatusChanged: ")
-            }
-        }
-    }
-
 
     private fun onGrantPermissionNeeded() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -248,7 +256,7 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
             ActivityResultContracts.RequestMultiplePermissions()
         ) {
             if (it.values.any { it == false }) {
-                //TODO
+                Toast.makeText(activity, "Permission request failed", Toast.LENGTH_LONG).show()
             }
         }
 
@@ -270,20 +278,22 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
     }
 
     private fun initMap() {
-        val mapFragment = childFragmentManager.findFragmentById(R.id.mapFragment) as SupportMapFragment
+        val mapFragment =
+            childFragmentManager.findFragmentById(R.id.mapFragment) as SupportMapFragment
         mapFragment.getMapAsync(this)
     }
 
-    private fun markCurrentLocation(location: Location) {
-        with(location) {
-            val current = LatLng(this.longitude, this.latitude)
-            Log.d("xxx", "$location")
-            mMap.addMarker(
-                MarkerOptions()
-                    .position(current)
-                    .title("Marker current")
-            )
-            mMap.moveCamera(CameraUpdateFactory.newLatLng(current))
+    private fun markCurrentLocation(locationResult: LocationResult) {
+        for (location in locationResult.locations) {
+            with(location) {
+                val current = LatLng(this.latitude, this.longitude)
+                Log.d("xxx", "$location")
+                mMap.animateCamera(
+                    CameraUpdateFactory.newLatLngZoom(
+                        current, defaultZoom
+                    )
+                )
+            }
         }
     }
 
