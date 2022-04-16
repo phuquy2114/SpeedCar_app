@@ -14,8 +14,8 @@
             android:name="com.google.android.gms.maps.SupportMapFragment" />
         <com.github.anastr.speedviewlib.AwesomeSpeedometer
             android:id="@+id/viewSpeed"
-            android:layout_width="80dp"
-            android:layout_height="80dp"
+            android:layout_width="150dp"
+            android:layout_height="150dp"
             android:layout_margin="30dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"/>

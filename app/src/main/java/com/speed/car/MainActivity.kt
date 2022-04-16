@@ -6,21 +6,23 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
-import android.location.GpsStatus
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
+import android.os.Looper
 import android.text.SpannableString
 import android.text.style.RelativeSizeSpan
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.preference.PreferenceManager
-import com.google.android.gms.location.FusedLocationProviderClient
+import com.github.anastr.speedviewlib.AwesomeSpeedometer
+import com.google.android.gms.location.*
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -33,7 +35,8 @@ import com.speed.car.services.GpsServices
 import java.util.*
 
 
-class MainActivity : AppCompatActivity(), LocationListener, GpsStatus.Listener, OnMapReadyCallback {
+class MainActivity : AppCompatActivity(), LocationListener, OnMapReadyCallback {
+    private val defaultZoom = 16.0f
 
     private var onGpsServiceUpdate: OnGpsServiceUpdate? = null
     private lateinit var mMap: GoogleMap
@@ -41,10 +44,11 @@ class MainActivity : AppCompatActivity(), LocationListener, GpsStatus.Listener, 
     private lateinit var sharedPreferences: SharedPreferences
     private val defaultLocation = LatLng(16.0668632, 108.2112561)
     private var locationPermissionGranted = false
-    // The entry point to the Fused Location Provider.
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
-    // location retrieved by the Fused Location Provider.
     private var lastKnownLocation: Location? = null
+
+    private lateinit var locationCallback: LocationCallback
+    private lateinit var speedometer: AwesomeSpeedometer
 
     companion object {
         lateinit var data: Data
@@ -56,8 +60,13 @@ class MainActivity : AppCompatActivity(), LocationListener, GpsStatus.Listener, 
         setContentView(R.layout.activity_main)
         initViews()
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
-        data = Data(onGpsServiceUpdate)
+        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
         mLocationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        locationCallback = object : LocationCallback() {
+            override fun onLocationResult(locationResult: LocationResult) {
+                markCurrentLocation(locationResult)
+            }
+        }
         onGpsServiceUpdate = object : OnGpsServiceUpdate {
             override fun update() {
                 Log.d("xxx", "update: ")
@@ -90,18 +99,19 @@ class MainActivity : AppCompatActivity(), LocationListener, GpsStatus.Listener, 
                 var s = SpannableString(String.format("%.0f %s", maxSpeedTemp, speedUnits))
                 s.setSpan(RelativeSizeSpan(0.5f), s.length - speedUnits.length - 1, s.length, 0)
                 // maxSpeed.setText(s)
-
+                Toast.makeText(this@MainActivity, "maxSpeed $s", Toast.LENGTH_SHORT).show()
                 s = SpannableString(String.format("%.0f %s", averageTemp, speedUnits))
                 s.setSpan(RelativeSizeSpan(0.5f), s.length - speedUnits.length - 1, s.length, 0)
                 // averageSpeed.setText(s)
-
+                Toast.makeText(this@MainActivity, s.toString(), Toast.LENGTH_SHORT).show()
                 s = SpannableString(String.format("%.3f %s", distanceTemp, distanceUnits))
                 s.setSpan(RelativeSizeSpan(0.5f), s.length - distanceUnits.length - 1, s.length, 0)
                 // distance.setText(s)
+                Toast.makeText(this@MainActivity, s.toString(), Toast.LENGTH_SHORT).show()
             }
 
         }
-
+        data = Data(onGpsServiceUpdate)
     }
 
     override fun onStart() {
@@ -124,21 +134,25 @@ class MainActivity : AppCompatActivity(), LocationListener, GpsStatus.Listener, 
             }
             mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 500, 0f, this)
         } else {
-            Log.w("MainActivity", "No GPS location provider found. GPS data display will not be available.");
+            Log.w(
+                "MainActivity",
+                "No GPS location provider found. GPS data display will not be available."
+            )
         }
 
         if (!mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-            showGpsDisabledDialog();
+            showGpsDisabledDialog()
         }
-
-        if (ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            return
-        }
-        mLocationManager.addGpsStatusListener(this);
+        val currentLocationRequest = LocationRequest()
+        currentLocationRequest.setInterval(500)
+            .setFastestInterval(0)
+            .setMaxWaitTime(0)
+            .setSmallestDisplacement(0F).priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+        fusedLocationProviderClient.requestLocationUpdates(
+            currentLocationRequest,
+            locationCallback,
+            Looper.getMainLooper()
+        )
     }
 
     override fun onDestroy() {
@@ -175,25 +189,12 @@ class MainActivity : AppCompatActivity(), LocationListener, GpsStatus.Listener, 
                 SpannableString(java.lang.String.format(Locale.ENGLISH, "%.0f %s", speed, units))
             s.setSpan(RelativeSizeSpan(0.25f), s.length - units.length - 1, s.length, 0)
             //currentSpeed.setText(s)
+            speedometer.speedTo(speed = speed.toFloat())
+            Toast.makeText(this, "current speed $s", Toast.LENGTH_SHORT).show()
             Log.d("xxx", speed.toString())
             Log.d("xxx", s.toString())
         }
     }
-
-    override fun onGpsStatusChanged(event: Int) {
-        when (event) {
-            GpsStatus.GPS_EVENT_SATELLITE_STATUS -> {
-                Log.d("xxx", "onGpsStatusChanged: ")
-            }
-            GpsStatus.GPS_EVENT_STOPPED -> if (!mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-                Log.d("xxx", "onGpsStatusChanged: ")
-            }
-            GpsStatus.GPS_EVENT_FIRST_FIX -> {
-                Log.d("xxx", "onGpsStatusChanged: ")
-            }
-        }
-    }
-
 
     private fun onGrantPermissionNeeded() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -232,7 +233,7 @@ class MainActivity : AppCompatActivity(), LocationListener, GpsStatus.Listener, 
             ActivityResultContracts.RequestMultiplePermissions()
         ) {
             if (it.values.any { it == false }) {
-                //TODO
+                Toast.makeText(this, "Permission request failed", Toast.LENGTH_LONG).show()
             }
         }
 
@@ -254,21 +255,23 @@ class MainActivity : AppCompatActivity(), LocationListener, GpsStatus.Listener, 
     }
 
     private fun initViews() {
+        speedometer = findViewById(R.id.viewSpeed)
         val mapFragment = supportFragmentManager
             .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
     }
 
-    private fun markCurrentLocation(location: Location) {
-        with(location) {
-            val current = LatLng(this.longitude, this.latitude)
-            Log.d("xxx", "$location")
-            mMap.addMarker(
-                MarkerOptions()
-                    .position(current)
-                    .title("Marker current")
-            )
-            mMap.moveCamera(CameraUpdateFactory.newLatLng(current))
+    private fun markCurrentLocation(locationResult: LocationResult) {
+        for (location in locationResult.locations) {
+            with(location) {
+                val current = LatLng(this.latitude, this.longitude)
+                Log.d("xxx", "$location")
+                mMap.animateCamera(
+                    CameraUpdateFactory.newLatLngZoom(
+                        current, defaultZoom
+                    )
+                )
+            }
         }
     }
 
@@ -286,15 +289,22 @@ class MainActivity : AppCompatActivity(), LocationListener, GpsStatus.Listener, 
                         // Set the map's camera position to the current location of the device.
                         lastKnownLocation = task.result
                         if (lastKnownLocation != null) {
-                            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(
-                                LatLng(lastKnownLocation!!.latitude,
-                                    lastKnownLocation!!.longitude), 10.0f))
+                            mMap.moveCamera(
+                                CameraUpdateFactory.newLatLngZoom(
+                                    LatLng(
+                                        lastKnownLocation!!.latitude,
+                                        lastKnownLocation!!.longitude
+                                    ), 10.0f
+                                )
+                            )
                         }
                     } else {
                         Log.d("xxx", "Current location is null. Using defaults.")
                         Log.e("xxx", "Exception: %s", task.exception)
-                        mMap.moveCamera(CameraUpdateFactory
-                            .newLatLngZoom(defaultLocation, 10.0f))
+                        mMap.moveCamera(
+                            CameraUpdateFactory
+                                .newLatLngZoom(defaultLocation, 10.0f)
+                        )
                         mMap.uiSettings.isMyLocationButtonEnabled = false
                     }
                 }
