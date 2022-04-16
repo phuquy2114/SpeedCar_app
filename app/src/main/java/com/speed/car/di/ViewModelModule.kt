@@ -8,8 +8,8 @@ import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
 
 val viewModelModule = module {
-	viewModel { MainViewModel(get()) }
-	factory { SharedPreferencesH(androidApplication()) }
-	viewModel { MainViewModel(get()) }
-	viewModel { HistoryViewModel() }
+    viewModel { MainViewModel(get(), get()) }
+    factory { SharedPreferencesH(androidApplication()) }
+    viewModel { MainViewModel(get(), get()) }
+    viewModel { HistoryViewModel() }
 }
