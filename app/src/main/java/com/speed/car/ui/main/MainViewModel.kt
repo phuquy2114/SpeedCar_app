@@ -32,7 +32,7 @@ class MainViewModel(
         it != null
     }
     val speedLimitCurrentStr = speedLimitCurrent.map {
-        it.toString() ?: "--"
+        it.toString().ifEmpty { "--" }
     }
 
     private var currentWayName: String? = null
