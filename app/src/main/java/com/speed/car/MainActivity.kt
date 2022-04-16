@@ -8,7 +8,6 @@ import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.location.GpsStatus
 import android.location.Location
-import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
@@ -19,6 +18,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.preference.PreferenceManager
+import com.google.android.gms.location.LocationListener
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -204,13 +204,17 @@ class MainActivity : AppCompatActivity(), LocationListener, GpsStatus.Listener, 
 
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
-        val current = LatLng(16.0668632, 108.2112561)
+        val current = LatLng(16.0668632, 108.2134448)
         mMap.addMarker(
             MarkerOptions()
                 .position(current)
                 .title("Marker current")
         )
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(current))
+        mMap.animateCamera(
+            CameraUpdateFactory.newLatLngZoom(
+                current, 15.0f
+            )
+        )
 
         getDeviceLocation()
     }
