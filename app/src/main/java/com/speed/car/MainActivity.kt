@@ -8,6 +8,7 @@ import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.location.GpsStatus
 import android.location.Location
+import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
@@ -16,9 +17,9 @@ import android.text.style.RelativeSizeSpan
 import android.util.Log
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.preference.PreferenceManager
-import com.google.android.gms.location.LocationListener
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -30,6 +31,7 @@ import com.speed.car.interfaces.OnGpsServiceUpdate
 import com.speed.car.model.Data
 import com.speed.car.services.GpsServices
 import java.util.*
+
 
 class MainActivity : AppCompatActivity(), LocationListener, GpsStatus.Listener, OnMapReadyCallback {
 
@@ -105,6 +107,38 @@ class MainActivity : AppCompatActivity(), LocationListener, GpsStatus.Listener, 
     override fun onStart() {
         super.onStart()
         onGrantPermissionNeeded()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (mLocationManager.allProviders.indexOf(LocationManager.GPS_PROVIDER) >= 0) {
+            if (ActivityCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                return
+            }
+            mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 500, 0f, this)
+        } else {
+            Log.w("MainActivity", "No GPS location provider found. GPS data display will not be available.");
+        }
+
+        if (!mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            showGpsDisabledDialog();
+        }
+
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
+        mLocationManager.addGpsStatusListener(this);
     }
 
     override fun onDestroy() {
@@ -243,6 +277,7 @@ class MainActivity : AppCompatActivity(), LocationListener, GpsStatus.Listener, 
      */
     @SuppressLint("MissingPermission")
     private fun getDeviceLocation() {
+        Log.d("xxx", "getDeviceLocation: ")
         try {
             if (locationPermissionGranted) {
                 val locationResult = fusedLocationProviderClient.lastLocation
@@ -267,5 +302,9 @@ class MainActivity : AppCompatActivity(), LocationListener, GpsStatus.Listener, 
         } catch (e: SecurityException) {
             Log.e("Exception: %s", e.message, e)
         }
+    }
+
+    private fun showGpsDisabledDialog() {
+        startActivity(Intent("android.settings.LOCATION_SOURCE_SETTINGS"))
     }
 }
