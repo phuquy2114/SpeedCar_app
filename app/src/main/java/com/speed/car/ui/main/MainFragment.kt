@@ -1,13 +1,15 @@
 package com.speed.car.ui.main
 
 import android.Manifest
+import android.annotation.SuppressLint
+import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.location.Location
+import android.location.*
 import android.location.LocationListener
-import android.location.LocationManager
 import android.os.Build
 import android.os.Looper
 import android.text.SpannableString
@@ -20,26 +22,32 @@ import androidx.core.content.ContextCompat
 import androidx.navigation.fragment.findNavController
 import androidx.preference.PreferenceManager
 import com.google.android.gms.location.*
+import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MarkerOptions
 import com.speed.car.R
 import com.speed.car.core.BaseFragment
 import com.speed.car.core.utils.observe
 import com.speed.car.databinding.FragmentMainBinding
 import com.speed.car.interfaces.OnGpsServiceUpdate
 import com.speed.car.model.Data
+import com.speed.car.notification.ChannelDetail
+import com.speed.car.notification.NotificationChannelType
+import com.speed.car.notification.NotificationContent
+import com.speed.car.notification.NotificationRepository
 import com.speed.car.services.GpsServices
 import org.koin.androidx.viewmodel.ext.android.stateViewModel
+import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.util.*
 
+
 class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), LocationListener,
     OnMapReadyCallback {
-    private val defaultZoom = 16.0f
+    private val defaultZoom = 20.0f
     private var onGpsServiceUpdate: OnGpsServiceUpdate? = null
     private lateinit var mMap: GoogleMap
     private lateinit var mLocationManager: LocationManager
@@ -55,12 +63,13 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
 
     private lateinit var locationCallback: LocationCallback
 
+    private val notificationRepository: NotificationRepository by inject()
+
     companion object {
         lateinit var data: Data
     }
 
-    override val viewModel: MainViewModel by stateViewModel()
-
+    override val viewModel: MainViewModel by viewModel()
 
     override fun getViewBinding(): FragmentMainBinding = FragmentMainBinding.inflate(layoutInflater)
     override fun observeViewModel() {
@@ -71,7 +80,9 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
 
     override fun viewBinding() {
         binding.viewModel = viewModel
+        binding.lifecycleOwner = this
         initMap()
+        observers()
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(requireActivity())
         data = Data(onGpsServiceUpdate)
         mLocationManager =
@@ -159,7 +170,6 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
         if (!mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
             showGpsDisabledDialog()
         }
-///////
         if (ActivityCompat.checkSelfPermission(
                 requireActivity(),
                 Manifest.permission.ACCESS_FINE_LOCATION
@@ -179,46 +189,19 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
         )
     }
 
-    ////
     override fun onDestroy() {
         super.onDestroy()
         requireActivity().stopService(Intent(activity, GpsServices::class.java))
     }
 
     override fun onLocationChanged(location: Location) {
-        Log.d("xxx", "onLocationChanged: ")
-        if (location.hasAccuracy()) {
-            var acc: Double = location.accuracy.toDouble()
-            val units: String
-            if (sharedPreferences.getBoolean("miles_per_hour", false)) {
-                units = "ft"
-                acc *= 3.28084
-            } else {
-                units = "m"
-            }
-            val s = SpannableString(String.format("%.0f %s", acc, units))
-            s.setSpan(RelativeSizeSpan(0.75f), s.length - units.length - 1, s.length, 0)
+        val geocoder: Geocoder
+        val addresses: List<Address>
+        geocoder = Geocoder(this.context, Locale.getDefault())
 
-        }
-
-        if (location.hasSpeed()) {
-            var speed: Double = location.speed * 3.6
-            val units: String
-            if (sharedPreferences.getBoolean("miles_per_hour", false)) { // Convert to MPH
-                speed *= 0.62137119
-                units = "mi/h"
-            } else {
-                units = "km/h"
-            }
-            val s =
-                SpannableString(java.lang.String.format(Locale.ENGLISH, "%.0f %s", speed, units))
-            s.setSpan(RelativeSizeSpan(0.25f), s.length - units.length - 1, s.length, 0)
-            //currentSpeed.setText(s)
-            binding.viewSpeed.speedTo(speed = speed.toFloat())
-            Toast.makeText(activity, "current speed $s", Toast.LENGTH_SHORT).show()
-            Log.d("xxx", speed.toString())
-            Log.d("xxx", s.toString())
-        }
+        addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
+        viewModel.onLocationChangeSpeed(location)
+        Log.d("xxx","address line ${addresses[0].getAddressLine(0)}")
     }
 
     private fun onGrantPermissionNeeded() {
@@ -262,20 +245,10 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
             }
         }
 
+    @SuppressLint("MissingPermission")
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
-        val current = LatLng(16.0668632, 108.2134448)
-        mMap.addMarker(
-            MarkerOptions()
-                .position(current)
-                .title("Marker current")
-        )
-        mMap.animateCamera(
-            CameraUpdateFactory.newLatLngZoom(
-                current, 15.0f
-            )
-        )
-
+        mMap.isMyLocationEnabled = true
         getDeviceLocation()
     }
 
@@ -285,7 +258,28 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
         mapFragment.getMapAsync(this)
     }
 
+    private fun observers() {
+        viewModel.currentSpeed.observe(viewLifecycleOwner) {
+            binding.viewSpeed.speedTo(speed = it.first)
+            Toast.makeText(activity, "current speed ${it.first}", Toast.LENGTH_SHORT).show()
+        }
+        viewModel.isOverSpeedLimit.observe(viewLifecycleOwner) {
+            if (it.first) {
+                val channelDetail = ChannelDetail(NotificationChannelType.SPEED_CAR, NotificationManager.IMPORTANCE_MAX)
+                val notificationContent =
+                    NotificationContent(1234, "Speed Warning", "Your current speed is ${it.second}")
+                notificationRepository.sendNotification(channelDetail, notificationContent)
+            }
+        }
+    }
+
     private fun markCurrentLocation(locationResult: LocationResult) {
+        val lastLocation = locationResult.lastLocation
+        val addresses: List<Address>
+        val geocoder = Geocoder(this.context, Locale.getDefault())
+
+        addresses = geocoder.getFromLocation(lastLocation.latitude, lastLocation.longitude, 1)
+        viewModel.checkSpeedLimit(addresses[0].thoroughfare)
         for (location in locationResult.locations) {
             with(location) {
                 val current = LatLng(this.latitude, this.longitude)

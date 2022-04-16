@@ -9,4 +9,5 @@
     <color name="white">#FFFFFFFF</color>
     <color name="blue">#3478F6</color>
     <color name="dark_divider">#3D3D40</color>
+    <color name="holo_red">#c93328</color>
 </resources>

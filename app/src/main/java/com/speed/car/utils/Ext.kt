@@ -1,6 +1,7 @@
 package com.speed.car.utils
 
 import android.view.View
+import androidx.databinding.BindingAdapter
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.QuerySnapshot
 import java.text.SimpleDateFormat
@@ -25,6 +26,12 @@ internal fun View.showOrGone(isGone: Boolean) {
     if (!isGone) show() else gone()
 }
 
+fun Boolean?.orFalse() = this ?: false
+
+@BindingAdapter("visible_or_gone")
+fun View.setVisibleOrGone(isVisible: Boolean?) {
+    visibility = if (isVisible.orFalse()) View.VISIBLE else View.GONE
+}
 fun Date?.toTime(dateFormat: String): String {
     return try {
         SimpleDateFormat(dateFormat, Locale.getDefault()).format(this)
