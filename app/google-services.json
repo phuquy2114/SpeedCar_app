@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "403396881897",
+    "project_id": "speedcar-66d29",
+    "storage_bucket": "speedcar-66d29.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:403396881897:android:241690c0d56958c76c6f78",
+        "android_client_info": {
+          "package_name": "com.speed.car"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "403396881897-2vofn8mmk4sqgjl5kgao0uavfnddgpg7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD-e8E70C6zoh2ayckop7-WOu8jd8niAew"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "403396881897-2vofn8mmk4sqgjl5kgao0uavfnddgpg7.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -6,13 +6,17 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.map
 import androidx.lifecycle.viewModelScope
+import com.bitkey.workhub.utils.SingleLiveEvent
 import com.speed.car.core.BaseViewModel
 import com.speed.car.utils.SharedPreferencesH
 import kotlinx.coroutines.launch
+import com.speed.car.firestore.FirestoreRepository
+import kotlinx.coroutines.flow.collectLatest
 
 
 class MainViewModel(
-    private val sharedPreferences: SharedPreferencesH
+    private val sharedPreferences: SharedPreferencesH,
+    private val fireStoreRepository: FirestoreRepository,
 ) : BaseViewModel() {
     val currentSpeed = MutableLiveData<Pair<Float, String>>()
     val currentAcc = MutableLiveData<Pair<Float, String>>()
@@ -66,5 +70,22 @@ class MainViewModel(
                 currentWayName = wayName
             }
         }
+    }
+    val navigateToHistory = SingleLiveEvent<Boolean>()
+
+    init {
+
+        launchCoroutine {
+            Log.d("TAGGG", "init : ")
+
+            fireStoreRepository.getSpeedAddressByAddress("Điện Biên Phủ").collectLatest {
+                Log.d("TAGGG", "response :$it ")
+
+            }
+        }
+    }
+
+    fun navigateToHistory() {
+        navigateToHistory.postValue(true)
     }
 }
