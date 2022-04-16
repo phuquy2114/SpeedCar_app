@@ -19,6 +19,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.ContextCompat.getSystemService
 import androidx.preference.PreferenceManager
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -27,16 +28,14 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
-import com.google.android.gms.location.LocationListener
+import com.speed.car.R
 import com.speed.car.core.BaseFragment
 import com.speed.car.databinding.FragmentHistoryBinding
 import com.speed.car.databinding.FragmentMainBinding
 import com.speed.car.interfaces.OnGpsServiceUpdate
 import com.speed.car.model.Data
 import com.speed.car.services.GpsServices
-import com.speed.car.ui.MainActivity
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import org.koin.core.parameter.parametersOf
 import java.util.*
 
 class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), LocationListener,
@@ -47,8 +46,10 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
     private lateinit var sharedPreferences: SharedPreferences
     private val defaultLocation = LatLng(16.0668632, 108.2112561)
     private var locationPermissionGranted = false
+
     // The entry point to the Fused Location Provider.
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
+
     // location retrieved by the Fused Location Provider.
     private var lastKnownLocation: Location? = null
 
@@ -63,9 +64,10 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
 
     override fun viewBinding() {
         binding.viewModel = viewModel
-        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
+        initMap()
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(requireActivity())
         data = Data(onGpsServiceUpdate)
-        mLocationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        mLocationManager = activity?.getSystemService(Context.LOCATION_SERVICE) as LocationManager
         onGpsServiceUpdate = object : OnGpsServiceUpdate {
             override fun update() {
                 Log.d("xxx", "update: ")
@@ -123,10 +125,10 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
         super.onResume()
         if (mLocationManager.allProviders.indexOf(LocationManager.GPS_PROVIDER) >= 0) {
             if (ActivityCompat.checkSelfPermission(
-                    this,
+                    requireActivity(),
                     Manifest.permission.ACCESS_FINE_LOCATION
                 ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                    this,
+                    requireActivity(),
                     Manifest.permission.ACCESS_COARSE_LOCATION
                 ) != PackageManager.PERMISSION_GRANTED
             ) {
@@ -134,7 +136,10 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
             }
             mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 500, 0f, this)
         } else {
-            Log.w("MainActivity", "No GPS location provider found. GPS data display will not be available.");
+            Log.w(
+                "MainActivity",
+                "No GPS location provider found. GPS data display will not be available."
+            );
         }
 
         if (!mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
@@ -142,7 +147,7 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
         }
 ///////
         if (ActivityCompat.checkSelfPermission(
-                this,
+                requireActivity(),
                 Manifest.permission.ACCESS_FINE_LOCATION
             ) != PackageManager.PERMISSION_GRANTED
         ) {
@@ -150,7 +155,8 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
         }
         mLocationManager.addGpsStatusListener(this);
     }
-////
+
+    ////
     override fun onDestroy() {
         super.onDestroy()
         requireActivity().stopService(Intent(activity, GpsServices::class.java))
@@ -208,7 +214,7 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
     private fun onGrantPermissionNeeded() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             if (ContextCompat.checkSelfPermission(
-                    this,
+                    requireActivity(),
                     Manifest.permission.ACCESS_FINE_LOCATION
                 )
                 == PackageManager.PERMISSION_DENIED
@@ -222,7 +228,7 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
             }
         } else {
             if (ContextCompat.checkSelfPermission(
-                    this,
+                    requireActivity(),
                     Manifest.permission.ACCESS_FINE_LOCATION
                 )
                 == PackageManager.PERMISSION_DENIED
@@ -263,9 +269,8 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
         getDeviceLocation()
     }
 
-    private fun initViews() {
-        val mapFragment = supportFragmentManager
-            .findFragmentById(R.id.map) as SupportMapFragment
+    private fun initMap() {
+        val mapFragment = childFragmentManager.findFragmentById(R.id.mapFragment) as SupportMapFragment
         mapFragment.getMapAsync(this)
     }
 
@@ -285,26 +290,32 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
     /**
      * Gets the current location of the device, and positions the map's camera.
      */
-    @SuppressLint("MissingPermission")
     private fun getDeviceLocation() {
         Log.d("xxx", "getDeviceLocation: ")
         try {
             if (locationPermissionGranted) {
                 val locationResult = fusedLocationProviderClient.lastLocation
-                locationResult.addOnCompleteListener(this) { task ->
+                locationResult.addOnCompleteListener(requireActivity()) { task ->
                     if (task.isSuccessful) {
                         // Set the map's camera position to the current location of the device.
                         lastKnownLocation = task.result
                         if (lastKnownLocation != null) {
-                            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(
-                                LatLng(lastKnownLocation!!.latitude,
-                                    lastKnownLocation!!.longitude), 10.0f))
+                            mMap.moveCamera(
+                                CameraUpdateFactory.newLatLngZoom(
+                                    LatLng(
+                                        lastKnownLocation!!.latitude,
+                                        lastKnownLocation!!.longitude
+                                    ), 10.0f
+                                )
+                            )
                         }
                     } else {
                         Log.d("xxx", "Current location is null. Using defaults.")
                         Log.e("xxx", "Exception: %s", task.exception)
-                        mMap.moveCamera(CameraUpdateFactory
-                            .newLatLngZoom(defaultLocation, 10.0f))
+                        mMap.moveCamera(
+                            CameraUpdateFactory
+                                .newLatLngZoom(defaultLocation, 10.0f)
+                        )
                         mMap.uiSettings.isMyLocationButtonEnabled = false
                     }
                 }
