@@ -16,12 +16,9 @@ import android.text.style.RelativeSizeSpan
 import android.util.Log
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.preference.PreferenceManager
-import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationListener
-import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -201,13 +198,17 @@ class MainActivity : AppCompatActivity(), LocationListener, GpsStatus.Listener, 
 
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
-        val current = LatLng(0.0, 0.0)
+        val current = LatLng(16.0668632, 108.2134448)
         mMap.addMarker(
             MarkerOptions()
                 .position(current)
                 .title("Marker current")
         )
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(current))
+        mMap.animateCamera(
+            CameraUpdateFactory.newLatLngZoom(
+                current, 15.0f
+            )
+        )
     }
 
     private fun initViews() {
