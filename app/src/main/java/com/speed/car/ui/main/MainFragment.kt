@@ -64,12 +64,12 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
 
     override val viewModel: MainViewModel by viewModel()
 
-
     override fun getViewBinding(): FragmentMainBinding = FragmentMainBinding.inflate(layoutInflater)
 
     override fun viewBinding() {
         binding.viewModel = viewModel
         initMap()
+        observers()
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(requireActivity())
         data = Data(onGpsServiceUpdate)
         mLocationManager =
@@ -157,7 +157,6 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
         if (!mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
             showGpsDisabledDialog()
         }
-///////
         if (ActivityCompat.checkSelfPermission(
                 requireActivity(),
                 Manifest.permission.ACCESS_FINE_LOCATION
@@ -177,46 +176,13 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
         )
     }
 
-    ////
     override fun onDestroy() {
         super.onDestroy()
         requireActivity().stopService(Intent(activity, GpsServices::class.java))
     }
 
     override fun onLocationChanged(location: Location) {
-        Log.d("xxx", "onLocationChanged: ")
-        if (location.hasAccuracy()) {
-            var acc: Double = location.accuracy.toDouble()
-            val units: String
-            if (sharedPreferences.getBoolean("miles_per_hour", false)) {
-                units = "ft"
-                acc *= 3.28084
-            } else {
-                units = "m"
-            }
-            val s = SpannableString(String.format("%.0f %s", acc, units))
-            s.setSpan(RelativeSizeSpan(0.75f), s.length - units.length - 1, s.length, 0)
-
-        }
-
-        if (location.hasSpeed()) {
-            var speed: Double = location.speed * 3.6
-            val units: String
-            if (sharedPreferences.getBoolean("miles_per_hour", false)) { // Convert to MPH
-                speed *= 0.62137119
-                units = "mi/h"
-            } else {
-                units = "km/h"
-            }
-            val s =
-                SpannableString(java.lang.String.format(Locale.ENGLISH, "%.0f %s", speed, units))
-            s.setSpan(RelativeSizeSpan(0.25f), s.length - units.length - 1, s.length, 0)
-            //currentSpeed.setText(s)
-            binding.viewSpeed.speedTo(speed = speed.toFloat())
-            Toast.makeText(activity, "current speed $s", Toast.LENGTH_SHORT).show()
-            Log.d("xxx", speed.toString())
-            Log.d("xxx", s.toString())
-        }
+        viewModel.onLocationChangeSpeed(location)
     }
 
     private fun onGrantPermissionNeeded() {
@@ -260,20 +226,15 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
             }
         }
 
+    @SuppressLint("MissingPermission")
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
-        val current = LatLng(16.0668632, 108.2134448)
-        mMap.addMarker(
-            MarkerOptions()
-                .position(current)
-                .title("Marker current")
-        )
+        mMap.isMyLocationEnabled = true
         mMap.animateCamera(
             CameraUpdateFactory.newLatLngZoom(
-                current, 15.0f
+                defaultLocation, defaultZoom
             )
         )
-
         getDeviceLocation()
     }
 
@@ -281,6 +242,13 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
         val mapFragment =
             childFragmentManager.findFragmentById(R.id.mapFragment) as SupportMapFragment
         mapFragment.getMapAsync(this)
+    }
+
+    private fun observers() {
+        viewModel.currentSpeed.observe(viewLifecycleOwner) {
+            binding.viewSpeed.speedTo(speed = it.first)
+            Toast.makeText(activity, "current speed ${it.first}", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun markCurrentLocation(locationResult: LocationResult) {
