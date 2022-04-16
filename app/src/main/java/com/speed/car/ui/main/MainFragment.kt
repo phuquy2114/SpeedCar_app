@@ -1,4 +1,4 @@
-package com.speed.car
+package com.speed.car.ui.main
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import android.location.GpsStatus
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
@@ -20,6 +21,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.ContextCompat.getSystemService
 import androidx.preference.PreferenceManager
 import com.github.anastr.speedviewlib.AwesomeSpeedometer
 import com.google.android.gms.location.*
@@ -29,39 +31,51 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
+import com.speed.car.R
+import com.speed.car.core.BaseFragment
+import com.speed.car.databinding.FragmentMainBinding
 import com.speed.car.interfaces.OnGpsServiceUpdate
 import com.speed.car.model.Data
 import com.speed.car.services.GpsServices
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.util.*
 
-
-class MainActivity : AppCompatActivity(), LocationListener, OnMapReadyCallback {
+class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), LocationListener,
+    OnMapReadyCallback {
     private val defaultZoom = 16.0f
-
     private var onGpsServiceUpdate: OnGpsServiceUpdate? = null
     private lateinit var mMap: GoogleMap
     private lateinit var mLocationManager: LocationManager
     private lateinit var sharedPreferences: SharedPreferences
     private val defaultLocation = LatLng(16.0668632, 108.2112561)
     private var locationPermissionGranted = false
+
+    // The entry point to the Fused Location Provider.
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
+
+    // location retrieved by the Fused Location Provider.
     private var lastKnownLocation: Location? = null
 
     private lateinit var locationCallback: LocationCallback
-    private lateinit var speedometer: AwesomeSpeedometer
 
     companion object {
         lateinit var data: Data
     }
 
-    @SuppressLint("MissingPermission")
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-        initViews()
-        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
-        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
-        mLocationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+    override val viewModel: MainViewModel by viewModel()
+
+
+    override fun getViewBinding(): FragmentMainBinding = FragmentMainBinding.inflate(layoutInflater)
+
+    override fun viewBinding() {
+        binding.viewModel = viewModel
+        initMap()
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(requireActivity())
+        data = Data(onGpsServiceUpdate)
+        mLocationManager =
+            requireActivity().getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        fusedLocationProviderClient =
+            LocationServices.getFusedLocationProviderClient(requireActivity())
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult) {
                 markCurrentLocation(locationResult)
@@ -99,15 +113,15 @@ class MainActivity : AppCompatActivity(), LocationListener, OnMapReadyCallback {
                 var s = SpannableString(String.format("%.0f %s", maxSpeedTemp, speedUnits))
                 s.setSpan(RelativeSizeSpan(0.5f), s.length - speedUnits.length - 1, s.length, 0)
                 // maxSpeed.setText(s)
-                Toast.makeText(this@MainActivity, "maxSpeed $s", Toast.LENGTH_SHORT).show()
+                Toast.makeText(activity, "maxSpeed $s", Toast.LENGTH_SHORT).show()
                 s = SpannableString(String.format("%.0f %s", averageTemp, speedUnits))
                 s.setSpan(RelativeSizeSpan(0.5f), s.length - speedUnits.length - 1, s.length, 0)
                 // averageSpeed.setText(s)
-                Toast.makeText(this@MainActivity, s.toString(), Toast.LENGTH_SHORT).show()
+                Toast.makeText(activity, s.toString(), Toast.LENGTH_SHORT).show()
                 s = SpannableString(String.format("%.3f %s", distanceTemp, distanceUnits))
                 s.setSpan(RelativeSizeSpan(0.5f), s.length - distanceUnits.length - 1, s.length, 0)
                 // distance.setText(s)
-                Toast.makeText(this@MainActivity, s.toString(), Toast.LENGTH_SHORT).show()
+                Toast.makeText(activity, s.toString(), Toast.LENGTH_SHORT).show()
             }
 
         }
@@ -123,10 +137,10 @@ class MainActivity : AppCompatActivity(), LocationListener, OnMapReadyCallback {
         super.onResume()
         if (mLocationManager.allProviders.indexOf(LocationManager.GPS_PROVIDER) >= 0) {
             if (ActivityCompat.checkSelfPermission(
-                    this,
+                    requireActivity(),
                     Manifest.permission.ACCESS_FINE_LOCATION
                 ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                    this,
+                    requireActivity(),
                     Manifest.permission.ACCESS_COARSE_LOCATION
                 ) != PackageManager.PERMISSION_GRANTED
             ) {
@@ -137,11 +151,19 @@ class MainActivity : AppCompatActivity(), LocationListener, OnMapReadyCallback {
             Log.w(
                 "MainActivity",
                 "No GPS location provider found. GPS data display will not be available."
-            )
+            );
         }
 
         if (!mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
             showGpsDisabledDialog()
+        }
+///////
+        if (ActivityCompat.checkSelfPermission(
+                requireActivity(),
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            return
         }
         val currentLocationRequest = LocationRequest()
         currentLocationRequest.setInterval(500)
@@ -155,9 +177,10 @@ class MainActivity : AppCompatActivity(), LocationListener, OnMapReadyCallback {
         )
     }
 
+    ////
     override fun onDestroy() {
         super.onDestroy()
-        stopService(Intent(this, GpsServices::class.java))
+        requireActivity().stopService(Intent(activity, GpsServices::class.java))
     }
 
     override fun onLocationChanged(location: Location) {
@@ -189,8 +212,8 @@ class MainActivity : AppCompatActivity(), LocationListener, OnMapReadyCallback {
                 SpannableString(java.lang.String.format(Locale.ENGLISH, "%.0f %s", speed, units))
             s.setSpan(RelativeSizeSpan(0.25f), s.length - units.length - 1, s.length, 0)
             //currentSpeed.setText(s)
-            speedometer.speedTo(speed = speed.toFloat())
-            Toast.makeText(this, "current speed $s", Toast.LENGTH_SHORT).show()
+            binding.viewSpeed.speedTo(speed = speed.toFloat())
+            Toast.makeText(activity, "current speed $s", Toast.LENGTH_SHORT).show()
             Log.d("xxx", speed.toString())
             Log.d("xxx", s.toString())
         }
@@ -199,7 +222,7 @@ class MainActivity : AppCompatActivity(), LocationListener, OnMapReadyCallback {
     private fun onGrantPermissionNeeded() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             if (ContextCompat.checkSelfPermission(
-                    this,
+                    requireActivity(),
                     Manifest.permission.ACCESS_FINE_LOCATION
                 )
                 == PackageManager.PERMISSION_DENIED
@@ -213,7 +236,7 @@ class MainActivity : AppCompatActivity(), LocationListener, OnMapReadyCallback {
             }
         } else {
             if (ContextCompat.checkSelfPermission(
-                    this,
+                    requireActivity(),
                     Manifest.permission.ACCESS_FINE_LOCATION
                 )
                 == PackageManager.PERMISSION_DENIED
@@ -233,7 +256,7 @@ class MainActivity : AppCompatActivity(), LocationListener, OnMapReadyCallback {
             ActivityResultContracts.RequestMultiplePermissions()
         ) {
             if (it.values.any { it == false }) {
-                Toast.makeText(this, "Permission request failed", Toast.LENGTH_LONG).show()
+                Toast.makeText(activity, "Permission request failed", Toast.LENGTH_LONG).show()
             }
         }
 
@@ -254,10 +277,9 @@ class MainActivity : AppCompatActivity(), LocationListener, OnMapReadyCallback {
         getDeviceLocation()
     }
 
-    private fun initViews() {
-        speedometer = findViewById(R.id.viewSpeed)
-        val mapFragment = supportFragmentManager
-            .findFragmentById(R.id.map) as SupportMapFragment
+    private fun initMap() {
+        val mapFragment =
+            childFragmentManager.findFragmentById(R.id.mapFragment) as SupportMapFragment
         mapFragment.getMapAsync(this)
     }
 
@@ -278,13 +300,12 @@ class MainActivity : AppCompatActivity(), LocationListener, OnMapReadyCallback {
     /**
      * Gets the current location of the device, and positions the map's camera.
      */
-    @SuppressLint("MissingPermission")
     private fun getDeviceLocation() {
         Log.d("xxx", "getDeviceLocation: ")
         try {
             if (locationPermissionGranted) {
                 val locationResult = fusedLocationProviderClient.lastLocation
-                locationResult.addOnCompleteListener(this) { task ->
+                locationResult.addOnCompleteListener(requireActivity()) { task ->
                     if (task.isSuccessful) {
                         // Set the map's camera position to the current location of the device.
                         lastKnownLocation = task.result

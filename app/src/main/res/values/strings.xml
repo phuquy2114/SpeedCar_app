@@ -33,5 +33,10 @@
     <string name="github" translatable="false">https://github.com/flyingrub/SpeedMeter</string>
     <string name="license_type" translatable="false">GNU General Public License 2</string>
     <string name="doante_url" translatable="false">https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&amp;hosted_button_id=6DE8SFMJKRVK2</string>
+    <string name="txt_ok">OK</string>
+    <string name="txt_cancel">Cancel</string>
+    <string name="dialog_location_permission_content">The permission to use location information acquisition was not granted. To use this function, allow location information acquisition in the terminal settings.</string>
+    <string name="dialog_location_permission_go_button">Go</string>
+    <string name="dialog_location_permission_cancel_button">Cancel</string>
 
 </resources>

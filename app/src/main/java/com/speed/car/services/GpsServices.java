@@ -18,9 +18,9 @@ import android.os.IBinder;
 
 import androidx.core.app.ActivityCompat;
 
-import com.speed.car.MainActivity;
 import com.speed.car.R;
 import com.speed.car.model.Data;
+import com.speed.car.ui.main.MainFragment;
 
 public class GpsServices extends Service implements LocationListener, Listener {
     private LocationManager mLocationManager;
@@ -39,7 +39,7 @@ public class GpsServices extends Service implements LocationListener, Listener {
     @Override
     public void onCreate() {
 
-        Intent notificationIntent = new Intent(this, MainActivity.class);
+        Intent notificationIntent = new Intent(this, MainFragment.class);
         notificationIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         contentIntent = PendingIntent.getActivity(
                 this, 0, notificationIntent, 0);
@@ -56,7 +56,7 @@ public class GpsServices extends Service implements LocationListener, Listener {
 
     @Override
     public void onLocationChanged(Location location) {
-        data = MainActivity.data;
+        data = MainFragment.data;
         if (data.isRunning()) {
             currentLat = location.getLatitude();
             currentLon = location.getLongitude();
