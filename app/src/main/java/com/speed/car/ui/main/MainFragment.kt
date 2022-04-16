@@ -7,9 +7,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
-import android.location.Location
+import android.location.*
 import android.location.LocationListener
-import android.location.LocationManager
 import android.os.Build
 import android.os.Looper
 import android.text.SpannableString
@@ -21,6 +20,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.preference.PreferenceManager
 import com.google.android.gms.location.*
+import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -38,10 +38,12 @@ import com.speed.car.notification.NotificationRepository
 import com.speed.car.services.GpsServices
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import java.util.*
+
 
 class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), LocationListener,
     OnMapReadyCallback {
-    private val defaultZoom = 16.0f
+    private val defaultZoom = 20.0f
     private var onGpsServiceUpdate: OnGpsServiceUpdate? = null
     private lateinit var mMap: GoogleMap
     private lateinit var mLocationManager: LocationManager
@@ -184,7 +186,13 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
     }
 
     override fun onLocationChanged(location: Location) {
+        val geocoder: Geocoder
+        val addresses: List<Address>
+        geocoder = Geocoder(this.context, Locale.getDefault())
+
+        addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
         viewModel.onLocationChangeSpeed(location)
+        Log.d("xxx","address line ${addresses[0].getAddressLine(0)}")
     }
 
     private fun onGrantPermissionNeeded() {
@@ -232,11 +240,6 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
         mMap.isMyLocationEnabled = true
-        mMap.animateCamera(
-            CameraUpdateFactory.newLatLngZoom(
-                defaultLocation, defaultZoom
-            )
-        )
         getDeviceLocation()
     }
 
@@ -262,6 +265,12 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
     }
 
     private fun markCurrentLocation(locationResult: LocationResult) {
+        val lastLocation = locationResult.lastLocation
+        val addresses: List<Address>
+        val geocoder = Geocoder(this.context, Locale.getDefault())
+
+        addresses = geocoder.getFromLocation(lastLocation.latitude, lastLocation.longitude, 1)
+        viewModel.checkSpeedLimit(addresses[0].thoroughfare)
         for (location in locationResult.locations) {
             with(location) {
                 val current = LatLng(this.latitude, this.longitude)

@@ -28,15 +28,10 @@ class MainViewModel(
         it != null
     }
     val speedLimitCurrentStr = speedLimitCurrent.map {
-        it.toString()
+        it ?: "--"
     }
 
-    init {
-        speedLimitCurrent.postValue(40)
-        viewModelScope.launch {
-            //TODO get api speed limit
-        }
-    }
+    private var currentWayName: String? = null
 
     fun onLocationChangeSpeed(location: Location) {
         currentLocation = location
@@ -62,6 +57,14 @@ class MainViewModel(
                 }
             Log.d("xxx", "onLocationChangeSpeed: $speed")
             currentSpeed.postValue(Pair(speed.toFloat(), units))
+        }
+    }
+
+    fun checkSpeedLimit(wayName: String) {
+        viewModelScope.launch {
+            if (wayName != currentWayName) {
+                currentWayName = wayName
+            }
         }
     }
 }
