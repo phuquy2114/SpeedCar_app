@@ -8,6 +8,7 @@ import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.location.GpsStatus
 import android.location.Location
+import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
@@ -16,12 +17,9 @@ import android.text.style.RelativeSizeSpan
 import android.util.Log
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.preference.PreferenceManager
 import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationListener
-import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -39,6 +37,12 @@ class MainActivity : AppCompatActivity(), LocationListener, GpsStatus.Listener, 
     private lateinit var mMap: GoogleMap
     private lateinit var mLocationManager: LocationManager
     private lateinit var sharedPreferences: SharedPreferences
+    private val defaultLocation = LatLng(16.0668632, 108.2112561)
+    private var locationPermissionGranted = false
+    // The entry point to the Fused Location Provider.
+    private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
+    // location retrieved by the Fused Location Provider.
+    private var lastKnownLocation: Location? = null
 
     companion object {
         lateinit var data: Data
@@ -50,7 +54,6 @@ class MainActivity : AppCompatActivity(), LocationListener, GpsStatus.Listener, 
         setContentView(R.layout.activity_main)
         initViews()
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
-
         data = Data(onGpsServiceUpdate)
         mLocationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
         onGpsServiceUpdate = object : OnGpsServiceUpdate {
@@ -201,13 +204,15 @@ class MainActivity : AppCompatActivity(), LocationListener, GpsStatus.Listener, 
 
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
-        val current = LatLng(0.0, 0.0)
+        val current = LatLng(16.0668632, 108.2112561)
         mMap.addMarker(
             MarkerOptions()
                 .position(current)
                 .title("Marker current")
         )
         mMap.moveCamera(CameraUpdateFactory.newLatLng(current))
+
+        getDeviceLocation()
     }
 
     private fun initViews() {
@@ -226,6 +231,37 @@ class MainActivity : AppCompatActivity(), LocationListener, GpsStatus.Listener, 
                     .title("Marker current")
             )
             mMap.moveCamera(CameraUpdateFactory.newLatLng(current))
+        }
+    }
+
+    /**
+     * Gets the current location of the device, and positions the map's camera.
+     */
+    @SuppressLint("MissingPermission")
+    private fun getDeviceLocation() {
+        try {
+            if (locationPermissionGranted) {
+                val locationResult = fusedLocationProviderClient.lastLocation
+                locationResult.addOnCompleteListener(this) { task ->
+                    if (task.isSuccessful) {
+                        // Set the map's camera position to the current location of the device.
+                        lastKnownLocation = task.result
+                        if (lastKnownLocation != null) {
+                            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(
+                                LatLng(lastKnownLocation!!.latitude,
+                                    lastKnownLocation!!.longitude), 10.0f))
+                        }
+                    } else {
+                        Log.d("xxx", "Current location is null. Using defaults.")
+                        Log.e("xxx", "Exception: %s", task.exception)
+                        mMap.moveCamera(CameraUpdateFactory
+                            .newLatLngZoom(defaultLocation, 10.0f))
+                        mMap.uiSettings.isMyLocationButtonEnabled = false
+                    }
+                }
+            }
+        } catch (e: SecurityException) {
+            Log.e("Exception: %s", e.message, e)
         }
     }
 }
