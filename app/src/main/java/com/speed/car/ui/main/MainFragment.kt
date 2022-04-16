@@ -2,43 +2,42 @@ package com.speed.car.ui.main
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
-import android.location.GpsStatus
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Build
-import android.os.Bundle
 import android.os.Looper
 import android.text.SpannableString
 import android.text.style.RelativeSizeSpan
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.core.content.ContextCompat.getSystemService
 import androidx.preference.PreferenceManager
-import com.github.anastr.speedviewlib.AwesomeSpeedometer
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MarkerOptions
 import com.speed.car.R
 import com.speed.car.core.BaseFragment
 import com.speed.car.databinding.FragmentMainBinding
 import com.speed.car.interfaces.OnGpsServiceUpdate
 import com.speed.car.model.Data
+import com.speed.car.notification.ChannelDetail
+import com.speed.car.notification.NotificationChannelType
+import com.speed.car.notification.NotificationContent
+import com.speed.car.notification.NotificationRepository
 import com.speed.car.services.GpsServices
+import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import java.util.*
 
 class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), LocationListener,
     OnMapReadyCallback {
@@ -57,6 +56,8 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
     private var lastKnownLocation: Location? = null
 
     private lateinit var locationCallback: LocationCallback
+
+    private val notificationRepository: NotificationRepository by inject()
 
     companion object {
         lateinit var data: Data
@@ -248,6 +249,14 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
         viewModel.currentSpeed.observe(viewLifecycleOwner) {
             binding.viewSpeed.speedTo(speed = it.first)
             Toast.makeText(activity, "current speed ${it.first}", Toast.LENGTH_SHORT).show()
+        }
+        viewModel.isOverSpeedLimit.observe(viewLifecycleOwner) {
+            if (it.first) {
+                val channelDetail = ChannelDetail(NotificationChannelType.SPEED_CAR, NotificationManager.IMPORTANCE_MAX)
+                val notificationContent =
+                    NotificationContent(1234, "Speed Warning", "Your current speed is ${it.second}")
+                notificationRepository.sendNotification(channelDetail, notificationContent)
+            }
         }
     }
 

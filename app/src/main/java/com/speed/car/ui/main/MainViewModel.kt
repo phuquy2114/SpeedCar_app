@@ -1,9 +1,14 @@
 package com.speed.car.ui.main
 
 import android.location.Location
+import android.util.Log
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.map
+import androidx.lifecycle.viewModelScope
 import com.speed.car.core.BaseViewModel
 import com.speed.car.utils.SharedPreferencesH
+import kotlinx.coroutines.launch
 
 
 class MainViewModel(
@@ -12,7 +17,21 @@ class MainViewModel(
     val currentSpeed = MutableLiveData<Pair<Float, String>>()
     val currentAcc = MutableLiveData<Pair<Float, String>>()
 
+    var currentLocation: Location? = null
+    var speedLimitCurrent: Int? = null
+    val isOverSpeedLimit: LiveData<Pair<Boolean, Float>> = currentSpeed.map {
+        val limit = speedLimitCurrent ?: return@map false to it.first
+        (it.first > limit) to it.first
+    }
+
+    init {
+        viewModelScope.launch {
+            //TODO get api speed limit
+        }
+    }
+
     fun onLocationChangeSpeed(location: Location) {
+        currentLocation = location
         if (location.hasAccuracy()) {
             var acc: Double = location.accuracy.toDouble()
             val units: String
@@ -33,6 +52,7 @@ class MainViewModel(
                 } else {
                     "km/h"
                 }
+            Log.d("xxx", "onLocationChangeSpeed: $speed")
             currentSpeed.postValue(Pair(speed.toFloat(), units))
         }
     }
