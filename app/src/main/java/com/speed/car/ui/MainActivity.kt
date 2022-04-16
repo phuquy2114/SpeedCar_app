@@ -1,28 +1,40 @@
 package com.speed.car.ui
 
-import android.content.Context
-import android.content.Intent
-import android.content.SharedPreferences
-import android.location.GpsStatus
-import android.location.Location
-import android.location.LocationManager
 import android.os.Bundle
-import android.text.SpannableString
-import android.text.style.RelativeSizeSpan
-import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
-import androidx.navigation.findNavController
-import androidx.preference.PreferenceManager
-import com.google.android.gms.location.LocationListener
+import androidx.core.view.GravityCompat
+import androidx.databinding.DataBindingUtil
+import androidx.navigation.Navigation
+import androidx.navigation.ui.NavigationUI
+import androidx.navigation.ui.setupWithNavController
 import com.speed.car.R
-import com.speed.car.ui.main.MainFragment
-
-import java.util.*
+import com.speed.car.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
-
+    private val navController by lazy {
+        Navigation.findNavController(this, R.id.fragmentContainerView)
+    }
+    private lateinit var binding: ActivityMainBinding
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
+//        setupDrawerLayout()
+    }
+
+    override fun onSupportNavigateUp(): Boolean {
+        return NavigationUI.navigateUp(navController, binding.drawerLayout)
+    }
+
+    private fun setupDrawerLayout() {
+        binding.navigationView.setupWithNavController(navController)
+        NavigationUI.setupActionBarWithNavController(this, navController, binding.drawerLayout)
+    }
+
+    override fun onBackPressed() {
+        if (binding.drawerLayout.isDrawerOpen(GravityCompat.START)) {
+            binding.drawerLayout.closeDrawer(GravityCompat.START)
+        } else {
+            super.onBackPressed()
+        }
     }
 }

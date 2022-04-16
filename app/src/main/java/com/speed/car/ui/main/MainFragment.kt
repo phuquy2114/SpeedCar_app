@@ -1,29 +1,24 @@
 package com.speed.car.ui.main
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
-import android.location.GpsStatus
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Build
-import android.os.Bundle
 import android.os.Looper
 import android.text.SpannableString
 import android.text.style.RelativeSizeSpan
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.core.content.ContextCompat.getSystemService
+import androidx.navigation.fragment.findNavController
 import androidx.preference.PreferenceManager
-import com.github.anastr.speedviewlib.AwesomeSpeedometer
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -33,6 +28,7 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.speed.car.R
 import com.speed.car.core.BaseFragment
+import com.speed.car.core.utils.observe
 import com.speed.car.databinding.FragmentMainBinding
 import com.speed.car.interfaces.OnGpsServiceUpdate
 import com.speed.car.model.Data
@@ -66,6 +62,11 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
 
 
     override fun getViewBinding(): FragmentMainBinding = FragmentMainBinding.inflate(layoutInflater)
+    override fun observeViewModel() {
+        observe(viewModel.navigateToHistory) {
+            findNavController().navigate(R.id.action_mainFragment_to_historyFragment)
+        }
+    }
 
     override fun viewBinding() {
         binding.viewModel = viewModel

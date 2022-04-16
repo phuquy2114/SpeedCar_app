@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group
+        android:id="@+id/grp_1"
+        android:checkableBehavior="single">
+        <item
+            android:id="@+id/homeFragment"
+            android:icon="@drawable/ic_action_stop"
+            android:title="Home" />
+    </group>
+
+    <group
+        android:id="@+id/grp_2"
+        android:checkableBehavior="single">
+
+        <item
+            android:id="@+id/panierFragment"
+            android:icon="@drawable/ic_action_stop"
+            android:title="card" />
+        <item
+            android:id="@+id/categoryFragment"
+            android:icon="@drawable/ic_action_stop"
+            android:title="category" />
+    </group>
+
+
+    <group
+        android:id="@+id/grp_5"
+        android:checkableBehavior="single">
+        <item
+            android:id="@+id/settingFragment"
+            android:icon="@drawable/ic_action_stop"
+            android:title="setting" />
+        <item
+            android:id="@+id/aboutFragment"
+            android:icon="@drawable/ic_action_stop"
+            android:title="Stop" />
+    </group>
+
+</menu>

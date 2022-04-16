@@ -1,6 +1,8 @@
 package com.speed.car.di
 
 import com.speed.car.data.RoomRepository
+import com.speed.car.firestore.FirestoreRepository
+import com.speed.car.firestore.FirestoreRepositoryImpl
 import com.speed.car.notification.NotificationRepository
 import com.speed.car.notification.NotificationRepositoryImpl
 import org.koin.android.ext.koin.androidContext
@@ -11,6 +13,7 @@ val repositoryModule = module {
         RoomRepository.getDatabase(androidContext())
     }
     single<NotificationRepository> { NotificationRepositoryImpl(get()) }
+    single<FirestoreRepository> { FirestoreRepositoryImpl(get()) }
 }
 
 
