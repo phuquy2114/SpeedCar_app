@@ -1,4 +1,4 @@
-package com.speed.car
+package com.speed.car.ui.main
 
 import android.content.Context
 import android.content.Intent
@@ -6,20 +6,24 @@ import android.content.SharedPreferences
 import android.location.GpsStatus
 import android.location.Location
 import android.location.LocationManager
-import android.os.Bundle
 import android.text.SpannableString
 import android.text.style.RelativeSizeSpan
 import android.util.Log
-import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.PreferenceManager
 import com.google.android.gms.location.LocationListener
+import com.speed.car.core.BaseFragment
+import com.speed.car.databinding.FragmentHistoryBinding
+import com.speed.car.databinding.FragmentMainBinding
 import com.speed.car.interfaces.OnGpsServiceUpdate
 import com.speed.car.model.Data
 import com.speed.car.services.GpsServices
+import com.speed.car.ui.MainActivity
+import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.koin.core.parameter.parametersOf
 import java.util.*
 
-class MainActivity : AppCompatActivity(), LocationListener, GpsStatus.Listener {
-
+class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), LocationListener,
+    GpsStatus.Listener {
     private var onGpsServiceUpdate: OnGpsServiceUpdate? = null
     private lateinit var mLocationManager: LocationManager
     private lateinit var sharedPreferences: SharedPreferences
@@ -28,11 +32,14 @@ class MainActivity : AppCompatActivity(), LocationListener, GpsStatus.Listener {
         lateinit var data: Data
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+    override val viewModel: MainViewModel by viewModel()
 
-        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
+
+    override fun getViewBinding(): FragmentMainBinding = FragmentMainBinding.inflate(layoutInflater)
+
+    override fun viewBinding() {
+        binding.viewModel = viewModel
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(requireActivity())
 
         onGpsServiceUpdate = object : OnGpsServiceUpdate {
             override fun update() {
@@ -78,7 +85,7 @@ class MainActivity : AppCompatActivity(), LocationListener, GpsStatus.Listener {
         }
 
         data = Data(onGpsServiceUpdate)
-        mLocationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        mLocationManager = activity?.getSystemService(Context.LOCATION_SERVICE) as LocationManager
     }
 
     override fun onPause() {
@@ -87,7 +94,7 @@ class MainActivity : AppCompatActivity(), LocationListener, GpsStatus.Listener {
 
     override fun onDestroy() {
         super.onDestroy()
-        stopService(Intent(this, GpsServices::class.java))
+        requireActivity().stopService(Intent(activity, GpsServices::class.java))
     }
 
     override fun onLocationChanged(location: Location) {
