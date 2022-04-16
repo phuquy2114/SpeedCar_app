@@ -1,26 +1,42 @@
 package com.speed.car
 
+import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.content.pm.PackageManager
 import android.location.GpsStatus
 import android.location.Location
 import android.location.LocationManager
+import android.os.Build
 import android.os.Bundle
 import android.text.SpannableString
 import android.text.style.RelativeSizeSpan
 import android.util.Log
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.preference.PreferenceManager
+import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationListener
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.OnMapReadyCallback
+import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MarkerOptions
 import com.speed.car.interfaces.OnGpsServiceUpdate
 import com.speed.car.model.Data
 import com.speed.car.services.GpsServices
 import java.util.*
 
-class MainActivity : AppCompatActivity(), LocationListener, GpsStatus.Listener {
+class MainActivity : AppCompatActivity(), LocationListener, GpsStatus.Listener, OnMapReadyCallback {
 
     private var onGpsServiceUpdate: OnGpsServiceUpdate? = null
+    private lateinit var mMap: GoogleMap
     private lateinit var mLocationManager: LocationManager
     private lateinit var sharedPreferences: SharedPreferences
 
@@ -28,14 +44,18 @@ class MainActivity : AppCompatActivity(), LocationListener, GpsStatus.Listener {
         lateinit var data: Data
     }
 
+    @SuppressLint("MissingPermission")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
+        initViews()
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
 
+        data = Data(onGpsServiceUpdate)
+        mLocationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
         onGpsServiceUpdate = object : OnGpsServiceUpdate {
             override fun update() {
+                Log.d("xxx", "update: ")
                 var maxSpeedTemp = data.maxSpeed
                 var distanceTemp = data.distance
                 var averageTemp: Double = if (sharedPreferences.getBoolean("auto_average", false)) {
@@ -77,12 +97,11 @@ class MainActivity : AppCompatActivity(), LocationListener, GpsStatus.Listener {
 
         }
 
-        data = Data(onGpsServiceUpdate)
-        mLocationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
     }
 
-    override fun onPause() {
-        super.onPause()
+    override fun onStart() {
+        super.onStart()
+        onGrantPermissionNeeded()
     }
 
     override fun onDestroy() {
@@ -91,6 +110,7 @@ class MainActivity : AppCompatActivity(), LocationListener, GpsStatus.Listener {
     }
 
     override fun onLocationChanged(location: Location) {
+        Log.d("xxx", "onLocationChanged: ")
         if (location.hasAccuracy()) {
             var acc: Double = location.accuracy.toDouble()
             val units: String
@@ -134,6 +154,78 @@ class MainActivity : AppCompatActivity(), LocationListener, GpsStatus.Listener {
             GpsStatus.GPS_EVENT_FIRST_FIX -> {
                 Log.d("xxx", "onGpsStatusChanged: ")
             }
+        }
+    }
+
+
+    private fun onGrantPermissionNeeded() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                )
+                == PackageManager.PERMISSION_DENIED
+            ) {
+                requestPermissionLauncher.launch(
+                    arrayOf(
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.ACCESS_COARSE_LOCATION,
+                    )
+                )
+            }
+        } else {
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                )
+                == PackageManager.PERMISSION_DENIED
+            ) {
+                requestPermissionLauncher.launch(
+                    arrayOf(
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.ACCESS_COARSE_LOCATION,
+                    )
+                )
+            }
+        }
+    }
+
+    private val requestPermissionLauncher =
+        registerForActivityResult(
+            ActivityResultContracts.RequestMultiplePermissions()
+        ) {
+            if (it.values.any { it == false }) {
+                //TODO
+            }
+        }
+
+    override fun onMapReady(googleMap: GoogleMap) {
+        mMap = googleMap
+        val current = LatLng(0.0, 0.0)
+        mMap.addMarker(
+            MarkerOptions()
+                .position(current)
+                .title("Marker current")
+        )
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(current))
+    }
+
+    private fun initViews() {
+        val mapFragment = supportFragmentManager
+            .findFragmentById(R.id.map) as SupportMapFragment
+        mapFragment.getMapAsync(this)
+    }
+
+    private fun markCurrentLocation(location: Location) {
+        with(location) {
+            val current = LatLng(this.longitude, this.latitude)
+            Log.d("xxx", "$location")
+            mMap.addMarker(
+                MarkerOptions()
+                    .position(current)
+                    .title("Marker current")
+            )
+            mMap.moveCamera(CameraUpdateFactory.newLatLng(current))
         }
     }
 }
