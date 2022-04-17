@@ -110,7 +110,7 @@ class MainViewModel(
             Log.d("xxx", "onLocationChangeSpeed: $speed")
             currentSpeed.postValue(Pair(speed.toFloat(), units))
             val speedMotor = if (isMotorMode.value == true) 40f else 30f
-            if (speed.toFloat() > speedLimitCurrentStr.value?.toFloat() ?: speedMotor) {
+            if (speed.toFloat() > speedLimitCurrent.value?.toFloat() ?: speedMotor) {
                 voiceRate.postValue(true)
             } else {
                 voiceRate.postValue(false)
