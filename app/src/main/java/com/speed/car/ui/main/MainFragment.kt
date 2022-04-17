@@ -97,7 +97,7 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
                 markCurrentLocation(locationResult)
             }
         }
-        mediaPlayer = MediaPlayer.create(requireActivity(),R.raw.police)
+        mediaPlayer = MediaPlayer.create(requireActivity(), R.raw.police)
         onGpsServiceUpdate = object : OnGpsServiceUpdate {
             override fun update() {
                 Log.d("xxx", "update: ")
@@ -229,9 +229,6 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
         viewModel.onLocationChangeSpeed(location)
         Log.d("xxx", "address line ${addresses[0].getAddressLine(0)}")
         Log.d("xxx", "address line ${addresses[0].thoroughfare}")
-
-
-        tts.speak("Bạn đã vượt quá tốc độ cho phép", TextToSpeech.ERROR_INVALID_REQUEST, null)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -340,6 +337,11 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
                 notificationRepository.sendNotification(channelDetail, notificationContent)
             }
         }
+
+        viewModel.voiceRate.observe(viewLifecycleOwner) {
+            voiceSpeed(it)
+        }
+
         viewModel.isEnableSOS.observe(viewLifecycleOwner) {
             Toast.makeText(
                 context,
@@ -429,5 +431,12 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
         }
         binding.drawerLayout.closeDrawer(GravityCompat.START)
         return true
+    }
+
+    private fun voiceSpeed(status: Boolean) {
+        if (status)
+            tts.speak("Bạn đã vượt quá tốc độ cho phép", TextToSpeech.ERROR_INVALID_REQUEST, null)
+        else
+            tts.stop()
     }
 }
