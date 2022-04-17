@@ -207,6 +207,7 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
         addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
         viewModel.onLocationChangeSpeed(location)
         Log.d("xxx", "address line ${addresses[0].getAddressLine(0)}")
+        Log.d("xxx", "address line ${addresses[0].thoroughfare}")
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -364,7 +365,7 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
                                     LatLng(
                                         lastKnownLocation!!.latitude,
                                         lastKnownLocation!!.longitude
-                                    ), 15.0f
+                                    ), 10.0f
                                 )
                             )
                         }
@@ -373,7 +374,7 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
                         Log.e("xxx", "Exception: %s", task.exception)
                         mMap.moveCamera(
                             CameraUpdateFactory
-                                .newLatLngZoom(defaultLocation, 15.0f)
+                                .newLatLngZoom(defaultLocation, 10.0f)
                         )
                         mMap.uiSettings.isMyLocationButtonEnabled = false
                     }
