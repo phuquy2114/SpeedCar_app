@@ -24,7 +24,7 @@ class MainViewModel(
     val currentAcc = MutableLiveData<Pair<Float, String>>()
     private var currentLocation: Location? = null
     val speedLimitCurrent = MutableLiveData<Int?>()
-    val voiceRate = MutableLiveData<Boolean>()
+    val voiceRate = MutableLiveData<Boolean>(false)
     val isOverSpeedLimit: LiveData<Pair<Boolean, Float>> = currentSpeed.map {
         val limit = speedLimitCurrent.value ?: return@map false to it.first
         (it.first > limit) to it.first
@@ -100,8 +100,8 @@ class MainViewModel(
                 }
             Log.d("xxx", "onLocationChangeSpeed: $speed")
             currentSpeed.postValue(Pair(speed.toFloat(), units))
-
-            if (speed.toFloat() > speedLimitCurrentStr.value?.toFloat() ?: 50f) {
+            val speedMotor = if (isMotorMode.value == true) 50f else 40f
+            if (speed.toFloat() > speedLimitCurrentStr.value?.toFloat() ?: speedMotor) {
                 voiceRate.postValue(true)
             } else {
                 voiceRate.postValue(false)

@@ -59,7 +59,7 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
     private val defaultLocation = LatLng(16.0668632, 108.2112561)
     private var locationPermissionGranted = false
     private lateinit var mediaPlayer: MediaPlayer
-    private lateinit var tts: TextToSpeech
+    private var tts: TextToSpeech? = null
 
     // The entry point to the Fused Location Provider.
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
@@ -203,7 +203,7 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
         ) { status ->
             if (status == TextToSpeech.SUCCESS) {
                 val textToSay = "Thiết bị đã được kết nối dữ liệu trên Ứng Dụng Team SPEED MOTOR"
-                tts.speak(textToSay, TextToSpeech.QUEUE_ADD, null)
+                tts?.speak(textToSay, TextToSpeech.QUEUE_ADD, null)
             }
         }
     }
@@ -212,8 +212,8 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
         super.onPause()
 
         mediaPlayer.stop()
-        tts.stop()
-        tts.shutdown()
+        tts?.stop()
+        tts?.shutdown()
     }
 
     override fun onDestroy() {
@@ -444,8 +444,8 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
 
     private fun voiceSpeed(status: Boolean) {
         if (status)
-            tts.speak("Bạn đã vượt quá tốc độ cho phép", TextToSpeech.ERROR_INVALID_REQUEST, null)
+            tts?.speak("Bạn đã vượt quá tốc độ cho phép", TextToSpeech.ERROR_INVALID_REQUEST, null)
         else
-            tts.stop()
+            tts?.stop()
     }
 }
