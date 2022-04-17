@@ -8,8 +8,10 @@ import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.location.*
 import android.location.LocationListener
+import android.media.MediaPlayer
 import android.os.Build
 import android.os.Looper
+import android.speech.tts.TextToSpeech
 import android.text.SpannableString
 import android.text.style.RelativeSizeSpan
 import android.util.Log
@@ -56,6 +58,8 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
     private lateinit var sharedPreferences: SharedPreferences
     private val defaultLocation = LatLng(16.0668632, 108.2112561)
     private var locationPermissionGranted = false
+    private lateinit var mediaPlayer: MediaPlayer
+    private lateinit var tts: TextToSpeech
 
     // The entry point to the Fused Location Provider.
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
@@ -92,6 +96,7 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
                 markCurrentLocation(locationResult)
             }
         }
+        mediaPlayer = MediaPlayer.create(requireActivity(), R.raw.police)
         onGpsServiceUpdate = object : OnGpsServiceUpdate {
             override fun update() {
                 Log.d("xxx", "update: ")
@@ -192,6 +197,23 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
             locationCallback,
             Looper.getMainLooper()
         )
+
+        tts = TextToSpeech(
+            requireActivity()
+        ) { status ->
+            if (status == TextToSpeech.SUCCESS) {
+                val textToSay = "Thiết bị đã được kết nối dữ liệu trên Ứng Dụng Team SPEED MOTOR"
+                tts.speak(textToSay, TextToSpeech.QUEUE_ADD, null)
+            }
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+
+        mediaPlayer.stop()
+        tts.stop()
+        tts.shutdown()
     }
 
     override fun onDestroy() {
@@ -314,6 +336,11 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
                 notificationRepository.sendNotification(channelDetail, notificationContent)
             }
         }
+
+        viewModel.voiceRate.observe(viewLifecycleOwner) {
+            voiceSpeed(it)
+        }
+
         viewModel.isEnableSOS.observe(viewLifecycleOwner) {
             Toast.makeText(
                 context,
@@ -413,5 +440,12 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
         }
         binding.drawerLayout.closeDrawer(GravityCompat.START)
         return true
+    }
+
+    private fun voiceSpeed(status: Boolean) {
+        if (status)
+            tts.speak("Bạn đã vượt quá tốc độ cho phép", TextToSpeech.ERROR_INVALID_REQUEST, null)
+        else
+            tts.stop()
     }
 }
