@@ -327,15 +327,23 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
                     NotificationManager.IMPORTANCE_MAX
                 )
                 val notificationContent =
-                    NotificationContent(1234, "Speed Warning", "Your current speed is ${it.second}")
+                    NotificationContent(
+                        1234,
+                        "Speed Motor",
+                        "Tốc độ của bạn đã vượt quá giới hạn cho phép ${it.second}"
+                    )
                 notificationRepository.sendNotification(channelDetail, notificationContent)
             }
         }
 
-        viewModel.speedAddress.observe(viewLifecycleOwner){
-            if (it.address != viewModel.currentWayName){
+        viewModel.speedAddress.observe(viewLifecycleOwner) {
+            if (it.address != viewModel.currentWayName) {
                 val speedMotor = if (viewModel.isMotorMode.value == true) 50 else 40
-                tts?.speak("Bạn đang đi trên đường ${it.address} với tốc độ cho phép xe của bạn là $speedMotor",TextToSpeech.QUEUE_ADD, null)
+                tts?.speak(
+                    "Bạn đang đi trên đường ${it.address} với tốc độ cho phép xe của bạn là $speedMotor",
+                    TextToSpeech.QUEUE_ADD,
+                    null
+                )
             }
         }
 
@@ -395,7 +403,7 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
                                     LatLng(
                                         lastKnownLocation!!.latitude,
                                         lastKnownLocation!!.longitude
-                                    ), 10.0f
+                                    ), defaultZoom
                                 )
                             )
                         }
@@ -404,7 +412,7 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
                         Log.e("xxx", "Exception: %s", task.exception)
                         mMap.moveCamera(
                             CameraUpdateFactory
-                                .newLatLngZoom(defaultLocation, 10.0f)
+                                .newLatLngZoom(defaultLocation, defaultZoom)
                         )
                         mMap.uiSettings.isMyLocationButtonEnabled = false
                     }
@@ -448,9 +456,22 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
     }
 
     private fun voiceSpeed(status: Boolean) {
-        if (status)
+        if (status) {
+            val channelDetail = ChannelDetail(
+                NotificationChannelType.SPEED_CAR,
+                NotificationManager.IMPORTANCE_MAX
+            )
+            val speedMotor = if (viewModel.isMotorMode.value == true) 50 else 40
+            val notificationContent =
+                NotificationContent(
+                    1234,
+                    "Speed Motor",
+                    "Tốc độ của bạn đã vượt quá giới hạn cho phép $speedMotor"
+                )
+            notificationRepository.sendNotification(channelDetail, notificationContent)
+
             tts?.speak("Bạn đã vượt quá tốc độ cho phép", TextToSpeech.ERROR_INVALID_REQUEST, null)
-        else
+        } else
             tts?.stop()
     }
 }

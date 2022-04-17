@@ -27,6 +27,7 @@ class MainViewModel(
     val speedLimitCurrent = MutableLiveData<Int?>()
     val voiceRate = MutableLiveData<Boolean>(false)
     val speedAddress = MutableLiveData<SpeedAddress>()
+
     val isOverSpeedLimit: LiveData<Pair<Boolean, Float>> = currentSpeed.map {
         val limit = speedLimitCurrent.value ?: return@map false to it.first
         (it.first > limit) to it.first
