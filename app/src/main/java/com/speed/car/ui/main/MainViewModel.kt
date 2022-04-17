@@ -6,17 +6,23 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.map
 import androidx.lifecycle.viewModelScope
+import com.bitkey.workhub.utils.SingleLiveEvent
 import com.speed.car.core.BaseViewModel
+import com.speed.car.firestore.FirestoreRepository
 import com.speed.car.utils.SharedPreferencesH
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 
 class MainViewModel(
-    private val sharedPreferences: SharedPreferencesH
+    private val sharedPreferences: SharedPreferencesH,
+    private val fireStoreRepository: FirestoreRepository,
 ) : BaseViewModel() {
     val currentSpeed = MutableLiveData<Pair<Float, String>>()
+    val maxSpeed = MutableLiveData<Pair<Float, String>>()
+    val distance = MutableLiveData<Pair<Float, String>>()
+    val average = MutableLiveData<Pair<Float, String>>()
     val currentAcc = MutableLiveData<Pair<Float, String>>()
-
     private var currentLocation: Location? = null
     val speedLimitCurrent = MutableLiveData<Int?>()
     val isOverSpeedLimit: LiveData<Pair<Boolean, Float>> = currentSpeed.map {
@@ -33,7 +39,41 @@ class MainViewModel(
         it.toString().ifEmpty { "--" }
     }
 
+    val maxSpeedView = maxSpeed.map {
+        it.second.ifEmpty { "00" }
+    }
+
+
+    val distanceView = distance.map {
+        it.second.ifEmpty { "00" }
+    }
+
+
+    val avaView = average.map {
+        it.second.ifEmpty { "00" }
+    }
+
+
+    val accView = currentAcc.map {
+        it.second.ifEmpty { "00" }
+    }
+
     private var currentWayName: String? = null
+
+    init {
+        launchCoroutine {
+            Log.d("xxx", "init : ")
+
+            fireStoreRepository.getSOSPeopleByAddress("Trạm").collectLatest {
+                Log.d("xxx", "response :$it ")
+            }
+
+            fireStoreRepository.getSpeedAddressByAddress(address = "Hùng Vương").collectLatest {
+                Log.d("xxx", "response :$it ")
+                speedLimitCurrent.postValue(it?.maxSpeed)
+            }
+        }
+    }
 
     fun onLocationChangeSpeed(location: Location) {
         currentLocation = location
@@ -48,6 +88,7 @@ class MainViewModel(
             }
             currentAcc.postValue(Pair(acc.toFloat(), units))
         }
+
         if (location.hasSpeed()) {
             var speed: Double = location.speed * 3.6
             val units: String =
@@ -63,6 +104,7 @@ class MainViewModel(
     }
 
     fun checkSpeedLimit(wayName: String) {
+        Log.d("xxx", "checkSpeedLimit: $wayName")
         viewModelScope.launch {
             if (wayName != currentWayName) {
                 currentWayName = wayName

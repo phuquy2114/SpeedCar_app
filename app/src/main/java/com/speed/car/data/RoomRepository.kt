@@ -4,12 +4,17 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import com.speed.car.model.History
+import androidx.room.TypeConverters
 import com.speed.car.data.dao.HistoryDao
+import com.speed.car.model.DateConverters
+import com.speed.car.model.History
 
 @Database(
     entities = [History::class],
     version = 1
+)
+@TypeConverters(
+    DateConverters::class
 )
 abstract class RoomRepository : RoomDatabase() {
     abstract fun getHistoryDao(): HistoryDao
