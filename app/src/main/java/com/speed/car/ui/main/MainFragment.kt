@@ -9,6 +9,7 @@ import android.content.pm.PackageManager
 import android.location.*
 import android.location.LocationListener
 import android.media.MediaPlayer
+import android.net.Uri
 import android.os.Build
 import android.os.Looper
 import android.speech.tts.TextToSpeech
@@ -248,6 +249,7 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
                     arrayOf(
                         Manifest.permission.ACCESS_FINE_LOCATION,
                         Manifest.permission.ACCESS_COARSE_LOCATION,
+                        Manifest.permission.CALL_PHONE,
                     )
                 )
             }
@@ -262,6 +264,7 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
                     arrayOf(
                         Manifest.permission.ACCESS_FINE_LOCATION,
                         Manifest.permission.ACCESS_COARSE_LOCATION,
+                        Manifest.permission.CALL_PHONE,
                     )
                 )
             }
@@ -480,13 +483,13 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
 
     private fun showSosMarker(sosPeople: List<SOSPeople>) {
         sosPeople.map {
-            Log.d("TAG", "showSosMarker: ${it.toString()}")
+            Log.d("TAG", "showSosMarker: ${it.phoneNumber}")
             val marker = mMap.addMarker(
                 MarkerOptions()
                     .position(LatLng(it.lng, it.lat))
                     .title(it.name)
             )
-            marker?.tag = it as SOSPeople
+            marker?.tag = it.phoneNumber
             marker
         }.let {
             viewModel.markers = it
@@ -494,11 +497,12 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
     }
 
     override fun onMarkerClick(marker: Marker): Boolean {
+        marker.showInfoWindow()
         // Retrieve the data from the marker.
         // Retrieve the data from the marker.
-        var clickCount = marker.tag as SOSPeople
-        Log.d("TAG", "onMarkerClick: ${clickCount.phoneNumber}")
-        Toast.makeText(requireContext(), clickCount.phoneNumber, Toast.LENGTH_SHORT).show()
+        var clickCount = marker.tag
+        val intent = Intent(Intent.ACTION_CALL, Uri.parse("tel:$clickCount"))
+        startActivity(intent)
         return false
     }
 }

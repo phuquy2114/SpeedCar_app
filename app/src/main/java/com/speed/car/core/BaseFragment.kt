@@ -53,14 +53,10 @@ abstract class BaseFragment<T : BaseViewModel, B : ViewDataBinding> : Fragment()
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        if (!::binding.isInitialized) {
-            binding = getViewBinding().apply {
-                lifecycleOwner = this@BaseFragment
-            }
+        binding = getViewBinding().apply {
+            lifecycleOwner = this@BaseFragment
         }
-        if (mView == null) {
-            mView = binding.root
-        }
+        mView = binding.root
         return mView
     }
 
