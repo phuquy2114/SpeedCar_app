@@ -104,6 +104,7 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
             }
         }
         mediaPlayer = MediaPlayer.create(requireActivity(), R.raw.police)
+        data = Data(onGpsServiceUpdate)
         onGpsServiceUpdate = object : OnGpsServiceUpdate {
             override fun update() {
                 Log.d("xxx", "update: ")
@@ -135,11 +136,12 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
 
                 val s = SpannableString(String.format("%.0f %s", maxSpeedTemp, speedUnits))
                 s.setSpan(RelativeSizeSpan(0.5f), s.length - speedUnits.length - 1, s.length, 0)
+                viewModel.setMaxSpeed(s.toString())
                 viewModel.maxSpeedView.postValue(s.toString())
 
                 val sVa = SpannableString(String.format("%.0f %s", averageTemp, speedUnits))
                 sVa.setSpan(RelativeSizeSpan(0.5f), s.length - speedUnits.length - 1, s.length, 0)
-                viewModel.avaView.postValue(sVa.toString())
+                viewModel.setAverageSpeed(sVa.toString())
 
                 val sDis = SpannableString(String.format("%.3f %s", distanceTemp, distanceUnits))
                 sDis.setSpan(
@@ -148,7 +150,7 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
                     s.length,
                     0
                 )
-                viewModel.distanceView.postValue(sDis.toString())
+                viewModel.setDistance(sDis.toString())
             }
 
         }
@@ -346,7 +348,7 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
                 notificationRepository.sendNotification(channelDetail, notificationContent)
                 viewModel.insertHistoryLimit(
                     History(
-                        id=Date().time.toInt(),
+                        id = Date().time.toInt(),
                         exceedSpeedTime = Date(),
                         exceedSpeedKilometers = "${it.second} km",
                         exceedSpeedKilometersAtArea = viewModel.currentWayName.toString()

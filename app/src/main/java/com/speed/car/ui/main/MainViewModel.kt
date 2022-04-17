@@ -116,11 +116,12 @@ class MainViewModel(
             if (wayName != currentWayName) {
                 currentWayName = wayName
             }
-            fireStoreRepository.getSpeedAddressByAddress(address = currentWayName ?: "").collectLatest {
-                Log.d("xxx", "response :$it ")
-                speedLimitCurrent.postValue(it?.maxSpeed)
-                speedAddress.postValue(it)
-            }
+            fireStoreRepository.getSpeedAddressByAddress(address = currentWayName ?: "")
+                .collectLatest {
+                    Log.d("xxx", "response :$it ")
+                    speedLimitCurrent.postValue(it?.maxSpeed)
+                    speedAddress.postValue(it)
+                }
         }
     }
 
@@ -128,14 +129,28 @@ class MainViewModel(
         isEnableSOS.postValue(isEnable)
         sharedPreferences.putBoolean("enable-sos", isEnable)
     }
+
     fun setTurnVehicleSpeed(isEnable: Boolean) {
         isMotorMode.postValue(isEnable)
     }
+
     fun insertHistoryLimit(history: History) {
         viewModelScope.launch {
             kotlin.runCatching {
                 historyUseCase.insertHistory(history)
             }
         }
+    }
+
+    fun setMaxSpeed(speed: String) {
+        maxSpeedView.postValue(speed)
+    }
+
+    fun setAverageSpeed(speed: String) {
+        avaView.postValue(speed)
+    }
+
+    fun setDistance(distance: String) {
+        distanceView.postValue(distance)
     }
 }
