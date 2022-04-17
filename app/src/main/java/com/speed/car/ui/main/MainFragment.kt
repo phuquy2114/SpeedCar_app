@@ -53,8 +53,9 @@ import java.util.*
 
 
 class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), LocationListener,
-    OnMapReadyCallback, NavigationView.OnNavigationItemSelectedListener {
-    private val defaultZoom = 20.0f
+    OnMapReadyCallback, NavigationView.OnNavigationItemSelectedListener,
+    GoogleMap.OnMarkerClickListener {
+    private val defaultZoom = 17.0f
     private var onGpsServiceUpdate: OnGpsServiceUpdate? = null
     private lateinit var mMap: GoogleMap
     private lateinit var mLocationManager: LocationManager
@@ -157,6 +158,14 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
     override fun onStart() {
         super.onStart()
         onGrantPermissionNeeded()
+        tts = TextToSpeech(
+            requireActivity()
+        ) { status ->
+            if (status == TextToSpeech.SUCCESS) {
+                val textToSay = "Thiết bị đã được kết nối dữ liệu trên Ứng Dụng Team SPEED MOTOR"
+                tts?.speak(textToSay, TextToSpeech.QUEUE_ADD, null)
+            }
+        }
     }
 
     override fun onResume() {
@@ -200,23 +209,12 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
             locationCallback,
             Looper.getMainLooper()
         )
-
-        tts = TextToSpeech(
-            requireActivity()
-        ) { status ->
-            if (status == TextToSpeech.SUCCESS) {
-                val textToSay = "Thiết bị đã được kết nối dữ liệu trên Ứng Dụng Team SPEED MOTOR"
-                tts?.speak(textToSay, TextToSpeech.QUEUE_ADD, null)
-            }
-        }
     }
 
     override fun onPause() {
         super.onPause()
-
         mediaPlayer.stop()
         tts?.stop()
-        tts?.shutdown()
     }
 
     override fun onDestroy() {
@@ -293,6 +291,8 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
         }
         mMap.isMyLocationEnabled = true
         getDeviceLocation()
+        // Set a listener for marker click.
+        mMap.setOnMarkerClickListener(this)
     }
 
     private fun initViews() {
@@ -340,14 +340,14 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
         }
 
         viewModel.speedAddress.observe(viewLifecycleOwner) {
-            if (it.address != viewModel.currentWayName) {
-                val speedMotor = if (viewModel.isMotorMode.value == true) 40 else 30
-                tts?.speak(
-                    "Bạn đang đi trên đường ${it.address} với tốc độ cho phép xe của bạn là $speedMotor",
-                    TextToSpeech.QUEUE_ADD,
-                    null
-                )
-            }
+//            if (it?.address != viewModel.currentWayName) {
+//                val speedMotor = if (viewModel.isMotorMode.value == true) 40 else 30
+//                tts?.speak(
+//                    "Bạn đang đi trên đường ${it?.address} với tốc độ cho phép xe của bạn là $speedMotor",
+//                    TextToSpeech.QUEUE_ADD,
+//                    null
+//                )
+//            }
         }
 
         viewModel.voiceRate.observe(viewLifecycleOwner) {
@@ -480,13 +480,25 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
 
     private fun showSosMarker(sosPeople: List<SOSPeople>) {
         sosPeople.map {
-            val marker =  mMap.addMarker(MarkerOptions()
-                .position(LatLng(it.lng, it.lat))
-                .title(it.name))
-            marker?.tag = it.id
+            Log.d("TAG", "showSosMarker: ${it.toString()}")
+            val marker = mMap.addMarker(
+                MarkerOptions()
+                    .position(LatLng(it.lng, it.lat))
+                    .title(it.name)
+            )
+            marker?.tag = it as SOSPeople
             marker
         }.let {
             viewModel.markers = it
         }
+    }
+
+    override fun onMarkerClick(marker: Marker): Boolean {
+        // Retrieve the data from the marker.
+        // Retrieve the data from the marker.
+        var clickCount = marker.tag as SOSPeople
+        Log.d("TAG", "onMarkerClick: ${clickCount.phoneNumber}")
+        Toast.makeText(requireContext(), clickCount.phoneNumber, Toast.LENGTH_SHORT).show()
+        return false
     }
 }
