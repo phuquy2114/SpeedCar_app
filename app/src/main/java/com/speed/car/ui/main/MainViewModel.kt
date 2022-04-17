@@ -45,22 +45,22 @@ class MainViewModel(
     }
 
     val maxSpeedView = maxSpeed.map {
-        it.second.ifEmpty { "00" }
+        it.second.ifBlank { "00" }
     }
 
 
     val distanceView = distance.map {
-        it.second.ifEmpty { "00" }
+        it.second.ifBlank { "00" }
     }
 
 
     val avaView = average.map {
-        it.second.ifEmpty { "00" }
+        it.second.ifBlank { "00" }
     }
 
 
     val accView = currentAcc.map {
-        it.second.ifEmpty { "00" }
+        it.second.ifBlank { "00" }
     }
 
     var currentWayName: String? = null

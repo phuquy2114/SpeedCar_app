@@ -356,6 +356,9 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
 
         viewModel.isEnableSOS.observe(viewLifecycleOwner) {
             Log.d("xxx", "observers: ${viewModel.sosPeople.value}")
+            val menuItem = binding.navigationDrawer.menu.findItem(R.id.action_sos)
+            val switchId = menuItem.actionView as SwitchCompat
+            switchId.isChecked = it
             showSosMarker(viewModel.sosPeople.value ?: listOf())
         }
     }
