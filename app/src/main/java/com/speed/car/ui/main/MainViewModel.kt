@@ -19,6 +19,9 @@ class MainViewModel(
     private val fireStoreRepository: FirestoreRepository,
 ) : BaseViewModel() {
     val currentSpeed = MutableLiveData<Pair<Float, String>>()
+    val maxSpeed = MutableLiveData<Pair<Float, String>>()
+    val distance = MutableLiveData<Pair<Float, String>>()
+    val average = MutableLiveData<Pair<Float, String>>()
     val currentAcc = MutableLiveData<Pair<Float, String>>()
     private var currentLocation: Location? = null
     val speedLimitCurrent = MutableLiveData<Int?>()
@@ -34,14 +37,38 @@ class MainViewModel(
         it.toString().ifEmpty { "--" }
     }
 
+    val maxSpeedView = maxSpeed.map {
+        it.second.ifEmpty { "00" }
+    }
+
+
+    val distanceView = distance.map {
+        it.second.ifEmpty { "00" }
+    }
+
+
+    val avaView = average.map {
+        it.second.ifEmpty { "00" }
+    }
+
+
+    val accView = currentAcc.map {
+        it.second.ifEmpty { "00" }
+    }
+
     private var currentWayName: String? = null
 
     init {
         launchCoroutine {
-            Log.d("TAGGG", "init : ")
+            Log.d("xxx", "init : ")
 
             fireStoreRepository.getSOSPeopleByAddress("Trạm").collectLatest {
-                Log.d("TAGGG", "response :$it ")
+                Log.d("xxx", "response :$it ")
+            }
+
+            fireStoreRepository.getSpeedAddressByAddress(address = "Hùng Vương").collectLatest {
+                Log.d("xxx", "response :$it ")
+                speedLimitCurrent.postValue(it?.maxSpeed)
             }
         }
     }
@@ -59,6 +86,7 @@ class MainViewModel(
             }
             currentAcc.postValue(Pair(acc.toFloat(), units))
         }
+
         if (location.hasSpeed()) {
             var speed: Double = location.speed * 3.6
             val units: String =
@@ -74,6 +102,7 @@ class MainViewModel(
     }
 
     fun checkSpeedLimit(wayName: String) {
+        Log.d("xxx", "checkSpeedLimit: $wayName")
         viewModelScope.launch {
             if (wayName != currentWayName) {
                 currentWayName = wayName

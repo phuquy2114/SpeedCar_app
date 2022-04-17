@@ -122,15 +122,22 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
                 var s = SpannableString(String.format("%.0f %s", maxSpeedTemp, speedUnits))
                 s.setSpan(RelativeSizeSpan(0.5f), s.length - speedUnits.length - 1, s.length, 0)
                 // maxSpeed.setText(s)
-                Toast.makeText(activity, "maxSpeed $s", Toast.LENGTH_SHORT).show()
-                s = SpannableString(String.format("%.0f %s", averageTemp, speedUnits))
-                s.setSpan(RelativeSizeSpan(0.5f), s.length - speedUnits.length - 1, s.length, 0)
+                viewModel.maxSpeed.postValue(Pair(maxSpeedTemp.toFloat(), s.toString()))
+
+                var sVa = SpannableString(String.format("%.0f %s", averageTemp, speedUnits))
+                sVa.setSpan(RelativeSizeSpan(0.5f), s.length - speedUnits.length - 1, s.length, 0)
                 // averageSpeed.setText(s)
-                Toast.makeText(activity, s.toString(), Toast.LENGTH_SHORT).show()
-                s = SpannableString(String.format("%.3f %s", distanceTemp, distanceUnits))
-                s.setSpan(RelativeSizeSpan(0.5f), s.length - distanceUnits.length - 1, s.length, 0)
+                viewModel.average.postValue(Pair(distanceTemp.toFloat(), sVa.toString()))
+
+                var sDis = SpannableString(String.format("%.3f %s", distanceTemp, distanceUnits))
+                sDis.setSpan(
+                    RelativeSizeSpan(0.5f),
+                    s.length - distanceUnits.length - 1,
+                    s.length,
+                    0
+                )
                 // distance.setText(s)
-                Toast.makeText(activity, s.toString(), Toast.LENGTH_SHORT).show()
+                viewModel.distance.postValue(Pair(distanceTemp.toFloat(), sDis.toString()))
             }
 
         }
@@ -263,9 +270,18 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
             }
         }
 
-    @SuppressLint("MissingPermission")
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
+        if (ActivityCompat.checkSelfPermission(
+                requireActivity(),
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                requireActivity(),
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
         mMap.isMyLocationEnabled = true
         getDeviceLocation()
     }
@@ -279,7 +295,6 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
     private fun observers() {
         viewModel.currentSpeed.observe(viewLifecycleOwner) {
             binding.viewSpeed.speedTo(speed = it.first)
-            Toast.makeText(activity, "current speed ${it.first}", Toast.LENGTH_SHORT).show()
         }
         viewModel.isOverSpeedLimit.observe(viewLifecycleOwner) {
             if (it.first) {
@@ -297,7 +312,7 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
     private fun markCurrentLocation(locationResult: LocationResult) {
         val lastLocation = locationResult.lastLocation
         val addresses: List<Address>
-        val geocoder = Geocoder(this.context, Locale.getDefault())
+        val geocoder = Geocoder(requireActivity(), Locale.getDefault())
 
         addresses = geocoder.getFromLocation(lastLocation.latitude, lastLocation.longitude, 1)
         addresses.first().thoroughfare?.let {
@@ -334,7 +349,7 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
                                     LatLng(
                                         lastKnownLocation!!.latitude,
                                         lastKnownLocation!!.longitude
-                                    ), 10.0f
+                                    ), 15.0f
                                 )
                             )
                         }
@@ -343,7 +358,7 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
                         Log.e("xxx", "Exception: %s", task.exception)
                         mMap.moveCamera(
                             CameraUpdateFactory
-                                .newLatLngZoom(defaultLocation, 10.0f)
+                                .newLatLngZoom(defaultLocation, 15.0f)
                         )
                         mMap.uiSettings.isMyLocationButtonEnabled = false
                     }
