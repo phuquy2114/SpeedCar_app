@@ -473,7 +473,7 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
                 NotificationChannelType.SPEED_CAR,
                 NotificationManager.IMPORTANCE_MAX
             )
-            val speedMotor = if (viewModel.isMotorMode.value == true) 40 else 30
+            val speedMotor = if (viewModel.isMotorMode.value == true) 50 else 40
             val notificationContent =
                 NotificationContent(
                     1234,
