@@ -1,7 +1,6 @@
 package com.speed.car.ui.main
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
@@ -11,6 +10,7 @@ import android.location.*
 import android.location.LocationListener
 import android.os.Build
 import android.os.Looper
+import android.speech.tts.TextToSpeech
 import android.text.SpannableString
 import android.text.style.RelativeSizeSpan
 import android.util.Log
@@ -55,6 +55,7 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
     private val defaultLocation = LatLng(16.0668632, 108.2112561)
     private var locationPermissionGranted = false
 
+    private lateinit var tts : TextToSpeech
     // The entry point to the Fused Location Provider.
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
 
@@ -90,6 +91,16 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
                 markCurrentLocation(locationResult)
             }
         }
+
+        tts = TextToSpeech(requireActivity(),object  : TextToSpeech.OnInitListener{
+            override fun onInit(status: Int) {
+                if (status == TextToSpeech.SUCCESS) {
+                    val textToSay = "Thiết bị đã được kết nối dữ liệu của Team SPEED MOTOR"
+                    tts.speak(textToSay, TextToSpeech.QUEUE_ADD, null)
+                }
+            }
+
+        })
         onGpsServiceUpdate = object : OnGpsServiceUpdate {
             override fun update() {
                 Log.d("xxx", "update: ")
@@ -228,6 +239,8 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
         viewModel.onLocationChangeSpeed(location)
         Log.d("xxx", "address line ${addresses[0].getAddressLine(0)}")
         Log.d("xxx", "address line ${addresses[0].thoroughfare}")
+
+        tts.speak("Bạn đã vượt quá tốc độ cho phép",TextToSpeech.ERROR_INVALID_REQUEST, null)
     }
 
     private fun onGrantPermissionNeeded() {
