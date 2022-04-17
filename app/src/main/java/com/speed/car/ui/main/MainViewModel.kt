@@ -21,10 +21,10 @@ class MainViewModel(
     private val fireStoreRepository: FirestoreRepository,
 ) : BaseViewModel() {
     val currentSpeed = MutableLiveData<Pair<Float, String>>()
-    val maxSpeed = MutableLiveData<Pair<Float, String>>()
-    val distance = MutableLiveData<Pair<Float, String>>()
-    val average = MutableLiveData<Pair<Float, String>>()
-    val currentAcc = MutableLiveData<Pair<Float, String>>()
+    val maxSpeed = MutableLiveData(Pair(0.0f, ""))
+    val distance = MutableLiveData(Pair(0.0f, ""))
+    val average = MutableLiveData(Pair(0.0f, ""))
+    val currentAcc = MutableLiveData(Pair(0.0f, ""))
     private var currentLocation: Location? = null
     val speedLimitCurrent = MutableLiveData<Int?>()
     val voiceRate = MutableLiveData<Boolean>(false)
@@ -44,22 +44,22 @@ class MainViewModel(
         it.toString().ifEmpty { "--" }
     }
 
-    val maxSpeedView = maxSpeed.map {
+    val maxSpeedView: LiveData<String> = maxSpeed.map {
         it.second.ifBlank { "00" }
     }
 
 
-    val distanceView = distance.map {
+    val distanceView: LiveData<String> = distance.map {
         it.second.ifBlank { "00" }
     }
 
 
-    val avaView = average.map {
+    val avaView: LiveData<String> = average.map {
         it.second.ifBlank { "00" }
     }
 
 
-    val accView = currentAcc.map {
+    val accView: LiveData<String> = currentAcc.map {
         it.second.ifBlank { "00" }
     }
 
