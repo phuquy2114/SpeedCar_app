@@ -75,6 +75,7 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
     private lateinit var locationCallback: LocationCallback
 
     private val notificationRepository: NotificationRepository by inject()
+    var fetchFirstFlag = true
 
     companion object {
         lateinit var data: Data
@@ -320,6 +321,12 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
             setNavigationItemSelectedListener(this@MainFragment)
             bringToFront()
         }
+
+        val menuItem = binding.navigationDrawer.menu.findItem(R.id.action_sos)
+        val switchId = menuItem.actionView as SwitchCompat
+        switchId.setOnCheckedChangeListener { _, isChecked ->
+            viewModel.setEnableSoS(isChecked)
+        }
     }
 
     private fun observers() {
@@ -357,12 +364,15 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
             voiceSpeed(it)
         }
 
-        viewModel.isEnableSOS.observe(viewLifecycleOwner) {
-            Log.d("xxx", "observers: ${viewModel.sosPeople.value}")
+        viewModel.combineSettingAndDataSOS.observe(viewLifecycleOwner) {
             val menuItem = binding.navigationDrawer.menu.findItem(R.id.action_sos)
             val switchId = menuItem.actionView as SwitchCompat
-            switchId.isChecked = it
-            showSosMarker(viewModel.sosPeople.value ?: listOf())
+            switchId.isChecked = it.first
+            if (it.first) {
+                showSosMarker(it.second ?: listOf())
+            } else {
+                clearSosMarker()
+            }
         }
     }
 
@@ -382,11 +392,14 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
             with(location) {
                 val current = LatLng(this.latitude, this.longitude)
                 Log.d("xxx", "$location")
-                mMap.animateCamera(
-                    CameraUpdateFactory.newLatLngZoom(
-                        current, defaultZoom
+                if (fetchFirstFlag) {
+                    mMap.animateCamera(
+                        CameraUpdateFactory.newLatLngZoom(
+                            current, defaultZoom
+                        )
                     )
-                )
+                }
+                fetchFirstFlag = false
             }
         }
     }
@@ -437,14 +450,7 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
         when (item.itemId) {
             R.id.action_history -> findNavController().navigate(R.id.historyFragment)
             R.id.action_sos -> {
-                val menuItem = binding.navigationDrawer.menu.findItem(R.id.action_sos)
-                val switchId = menuItem.actionView as SwitchCompat
-                val isChecked = viewModel.isEnableSOS.value ?: false
-                switchId.isChecked = !isChecked
-                viewModel.setEnableSoS(!isChecked)
-                switchId.setOnCheckedChangeListener { _, isCheck ->
-                    viewModel.setEnableSoS(isCheck)
-                }
+
             }
             R.id.action_vehicle_max_speed -> {
                 val menuItem = binding.navigationDrawer.menu.findItem(R.id.action_vehicle_max_speed)
@@ -483,17 +489,26 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
 
     private fun showSosMarker(sosPeople: List<SOSPeople>) {
         sosPeople.map {
+            Log.d("TAG", "showSosMarker: $it")
             Log.d("TAG", "showSosMarker: ${it.phoneNumber}")
             val marker = mMap.addMarker(
                 MarkerOptions()
                     .position(LatLng(it.lng, it.lat))
                     .title(it.name)
             )
+            marker?.tag = it
             marker?.tag = it.phoneNumber
             marker
         }.let {
             viewModel.markers = it
         }
+    }
+
+    private fun clearSosMarker() {
+        viewModel.markers.forEach { mLocationMarker ->
+            mLocationMarker?.remove()
+        }
+        viewModel.markers = listOf()
     }
 
     override fun onMarkerClick(marker: Marker): Boolean {
