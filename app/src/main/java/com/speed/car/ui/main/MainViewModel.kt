@@ -6,8 +6,10 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.map
 import androidx.lifecycle.viewModelScope
+import com.google.android.gms.maps.model.Marker
 import com.speed.car.core.BaseViewModel
 import com.speed.car.firestore.FirestoreRepository
+import com.speed.car.model.SOSPeople
 import com.speed.car.model.SpeedAddress
 import com.speed.car.utils.SharedPreferencesH
 import kotlinx.coroutines.flow.collectLatest
@@ -63,18 +65,22 @@ class MainViewModel(
 
     var currentWayName: String? = null
 
+    var markers: List<Marker?> = listOf()
+
+    val sosPeople = MutableLiveData<List<SOSPeople>>()
+
     init {
         launchCoroutine {
             Log.d("xxx", "init : ")
 
-            fireStoreRepository.getSOSPeopleByAddress("Trạm").collectLatest {
-                Log.d("xxx", "response :$it ")
+            sharedPreferences.getBoolean("enable-sos").let {
+                isEnableSOS.postValue(it)
             }
 
-//            fireStoreRepository.getSpeedAddressByAddress(address = "Hùng Vương").collectLatest {
-//                Log.d("xxx", "response :$it ")
-//                speedLimitCurrent.postValue(it?.maxSpeed)
-//            }
+            fireStoreRepository.getSOSPeople().collectLatest {
+                Log.d("xxx", "sos: $it")
+                sosPeople.postValue(it ?: listOf())
+            }
         }
     }
 
@@ -128,6 +134,7 @@ class MainViewModel(
 
     fun setEnableSoS(isEnable: Boolean) {
         isEnableSOS.postValue(isEnable)
+        sharedPreferences.putBoolean("enable-sos", isEnable)
     }
     fun setTurnVehicleSpeed(isEnable: Boolean) {
         isMotorMode.postValue(isEnable)
