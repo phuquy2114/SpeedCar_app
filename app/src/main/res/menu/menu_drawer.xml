@@ -3,7 +3,12 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:android="http://schemas.android.com/apk/res/android">
     <item
-        android:id="@+id/action_add"
+        android:id="@+id/action_history"
         android:title="@string/history"
-        app:showAsAction="always" />
+        android:icon="@android:drawable/ic_menu_recent_history"/>
+    <item
+        android:id="@+id/action_sos"
+        android:title="@string/sos"
+        app:actionViewClass="androidx.appcompat.widget.SwitchCompat"
+        android:icon="@android:drawable/ic_menu_help"/>
 </menu>

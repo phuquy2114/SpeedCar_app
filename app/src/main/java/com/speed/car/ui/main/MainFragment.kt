@@ -10,18 +10,25 @@ import android.content.pm.PackageManager
 import android.location.*
 import android.location.LocationListener
 import android.os.Build
+import android.os.Bundle
 import android.os.Looper
 import android.text.SpannableString
 import android.text.style.RelativeSizeSpan
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.MenuItem
+import android.view.View
+import android.view.ViewGroup
+import android.widget.Switch
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.SwitchCompat
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
+import androidx.navigation.fragment.findNavController
 import androidx.preference.PreferenceManager
 import com.google.android.gms.location.*
 import com.google.android.gms.location.LocationRequest
@@ -46,6 +53,7 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.util.*
 
 
+@SuppressLint("UseSwitchCompatOrMaterialCode")
 class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), LocationListener,
     OnMapReadyCallback, NavigationView.OnNavigationItemSelectedListener {
     private val defaultZoom = 20.0f
@@ -160,7 +168,7 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
             Log.w(
                 "MainActivity",
                 "No GPS location provider found. GPS data display will not be available."
-            );
+            )
         }
 
         if (!mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
@@ -195,7 +203,7 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
         val geocoder = Geocoder(this.context, Locale.getDefault())
         addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
         viewModel.onLocationChangeSpeed(location)
-        Log.d("xxx","address line ${addresses[0].getAddressLine(0)}")
+        Log.d("xxx", "address line ${addresses[0].getAddressLine(0)}")
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -274,21 +282,33 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
         )
         mDrawerToggle?.syncState()
         binding.drawerLayout.addDrawerListener(mDrawerToggle!!)
-        binding.navigationDrawer.bringToFront()
+        binding.navigationDrawer.apply {
+            setNavigationItemSelectedListener(this@MainFragment)
+            bringToFront()
+        }
     }
 
     private fun observers() {
         viewModel.currentSpeed.observe(viewLifecycleOwner) {
             binding.viewSpeed.speedTo(speed = it.first)
-            Toast.makeText(activity, "current speed ${it.first}", Toast.LENGTH_SHORT).show()
         }
         viewModel.isOverSpeedLimit.observe(viewLifecycleOwner) {
             if (it.first) {
-                val channelDetail = ChannelDetail(NotificationChannelType.SPEED_CAR, NotificationManager.IMPORTANCE_MAX)
+                val channelDetail = ChannelDetail(
+                    NotificationChannelType.SPEED_CAR,
+                    NotificationManager.IMPORTANCE_MAX
+                )
                 val notificationContent =
                     NotificationContent(1234, "Speed Warning", "Your current speed is ${it.second}")
                 notificationRepository.sendNotification(channelDetail, notificationContent)
             }
+        }
+        viewModel.isEnableSOS.observe(viewLifecycleOwner) {
+            Toast.makeText(
+                context,
+                if (it) "is checked!!!" else "not checked!!!",
+                Toast.LENGTH_SHORT
+            ).show()
         }
     }
 
@@ -355,6 +375,20 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
     }
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
-        return false
+        when (item.itemId) {
+            R.id.action_history -> findNavController().navigate(R.id.historyFragment)
+            R.id.action_sos -> {
+                val menuItem = binding.navigationDrawer.menu.findItem(R.id.action_sos)
+                val switchId = menuItem.actionView as SwitchCompat
+                val isChecked = viewModel.isEnableSOS.value ?: false
+                switchId.isChecked = !isChecked
+                viewModel.setEnableSoS(!isChecked)
+                switchId.setOnCheckedChangeListener { _, isCheck ->
+                    viewModel.setEnableSoS(isCheck)
+                }
+            }
+        }
+        binding.drawerLayout.closeDrawer(GravityCompat.START)
+        return true
     }
 }

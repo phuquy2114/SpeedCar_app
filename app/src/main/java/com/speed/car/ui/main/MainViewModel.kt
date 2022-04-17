@@ -69,4 +69,8 @@ class MainViewModel(
             }
         }
     }
+
+    fun setEnableSoS(isEnable: Boolean) {
+        isEnableSOS.postValue(isEnable)
+    }
 }

@@ -65,20 +65,10 @@
             android:id="@+id/navigation_drawer"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:fitsSystemWindows="true"
+            android:layout_marginTop="90dp"
             android:layout_gravity="start"
             app:headerLayout="@layout/layout_header_drawer"
             app:menu="@menu/menu_drawer">
-                <com.speed.car.utils.TextWithSwitchView
-                    android:id="@+id/auto_lock"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="32dp"
-                    app:twsv_bottom_divider_margin_start_visibility="true"
-                    app:twsv_checked="true"
-                    app:twsv_enable="@{viewModel.isEnableSOS}"
-                    app:twsv_text="@string/sos"
-                    app:twsv_top_divider_visibility="true" />
         </com.google.android.material.navigation.NavigationView>
 
     </androidx.drawerlayout.widget.DrawerLayout>
