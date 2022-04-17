@@ -1,23 +1,27 @@
 package com.speed.car.ui.history
 
 import androidx.databinding.ObservableArrayList
+import androidx.lifecycle.viewModelScope
 import com.bitkey.workhub.utils.SingleLiveEvent
 import com.speed.car.core.BaseViewModel
+import com.speed.car.domain.usecase.HistoryUseCase
 import com.speed.car.model.History
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import java.util.*
 
-class HistoryViewModel : BaseViewModel() {
+class HistoryViewModel(
+    private val historyUseCase: HistoryUseCase
+) : BaseViewModel() {
     val histories = ObservableArrayList<History>()
     val back = SingleLiveEvent<Boolean>()
 
     init {
-        histories.addAll(
-            listOf(
-                History(0, Date(), "80.0", "75.0"),
-                History(1, Date(), "75.0", "70.0"),
-                History(2, Date(), "120", "100")
-            )
-        )
+        viewModelScope.launch {
+            historyUseCase.loadHistory().collectLatest {
+                histories.addAll(it)
+            }
+        }
     }
 
     fun back() {

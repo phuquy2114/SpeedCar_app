@@ -1,6 +1,7 @@
 package com.speed.car.di
 
 import com.speed.car.data.RoomRepository
+import com.speed.car.domain.usecase.HistoryUseCase
 import com.speed.car.firestore.FirestoreRepository
 import com.speed.car.firestore.FirestoreRepositoryImpl
 import com.speed.car.notification.NotificationRepository
@@ -17,6 +18,7 @@ val repositoryModule = module {
     single<NotificationRepository> { NotificationRepositoryImpl(get()) }
     single<FirestoreRepository> { FirestoreRepositoryImpl(get()) }
     single { SharedPreferencesH(androidApplication()) }
+    single { HistoryUseCase(get()) }
 
 }
 

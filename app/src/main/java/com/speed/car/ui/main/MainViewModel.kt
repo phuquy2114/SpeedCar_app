@@ -5,22 +5,21 @@ import android.util.Log
 import androidx.lifecycle.*
 import com.google.android.gms.maps.model.Marker
 import com.speed.car.core.BaseViewModel
+import com.speed.car.domain.usecase.HistoryUseCase
 import com.speed.car.firestore.FirestoreRepository
+import com.speed.car.model.History
 import com.speed.car.model.SOSPeople
 import com.speed.car.model.SpeedAddress
 import com.speed.car.utils.SharedPreferencesH
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
-
 class MainViewModel(
     private val sharedPreferences: SharedPreferencesH,
     private val fireStoreRepository: FirestoreRepository,
+    private val historyUseCase: HistoryUseCase
 ) : BaseViewModel() {
     val currentSpeed = MutableLiveData<Pair<Float, String>>()
-    val maxSpeed = MutableLiveData(Pair(0.0f, ""))
-    val distance = MutableLiveData(Pair(0.0f, ""))
-    val average = MutableLiveData(Pair(0.0f, ""))
     val currentAcc = MutableLiveData(Pair(0.0f, ""))
     private var currentLocation: Location? = null
     val speedLimitCurrent = MutableLiveData<Int?>()
@@ -131,5 +130,12 @@ class MainViewModel(
     }
     fun setTurnVehicleSpeed(isEnable: Boolean) {
         isMotorMode.postValue(isEnable)
+    }
+    fun insertHistoryLimit(history: History) {
+        viewModelScope.launch {
+            kotlin.runCatching {
+                historyUseCase.insertHistory(history)
+            }
+        }
     }
 }

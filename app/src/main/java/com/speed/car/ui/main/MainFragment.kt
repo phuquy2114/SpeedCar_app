@@ -42,6 +42,7 @@ import com.speed.car.core.BaseFragment
 import com.speed.car.databinding.FragmentMainBinding
 import com.speed.car.interfaces.OnGpsServiceUpdate
 import com.speed.car.model.Data
+import com.speed.car.model.History
 import com.speed.car.model.SOSPeople
 import com.speed.car.notification.ChannelDetail
 import com.speed.car.notification.NotificationChannelType
@@ -343,6 +344,14 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
                         "Tốc độ của bạn đã vượt quá giới hạn cho phép ${it.second}"
                     )
                 notificationRepository.sendNotification(channelDetail, notificationContent)
+                viewModel.insertHistoryLimit(
+                    History(
+                        id=Date().time.toInt(),
+                        exceedSpeedTime = Date(),
+                        exceedSpeedKilometers = "${it.second} km",
+                        exceedSpeedKilometersAtArea = viewModel.currentWayName.toString()
+                    )
+                )
             }
         }
 
