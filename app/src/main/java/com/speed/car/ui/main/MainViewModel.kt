@@ -6,7 +6,6 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.map
 import androidx.lifecycle.viewModelScope
-import com.bitkey.workhub.utils.SingleLiveEvent
 import com.speed.car.core.BaseViewModel
 import com.speed.car.firestore.FirestoreRepository
 import com.speed.car.utils.SharedPreferencesH
@@ -31,7 +30,7 @@ class MainViewModel(
     }
 
     val isEnableSOS = MutableLiveData(false)
-
+    val isMotorMode = MutableLiveData(false)
     val isVisibleLimit = speedLimitCurrent.map {
         it != null
     }
@@ -114,5 +113,8 @@ class MainViewModel(
 
     fun setEnableSoS(isEnable: Boolean) {
         isEnableSOS.postValue(isEnable)
+    }
+    fun setTurnVehicleSpeed(isEnable: Boolean) {
+        isMotorMode.postValue(isEnable)
     }
 }

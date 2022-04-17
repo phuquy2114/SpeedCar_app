@@ -44,5 +44,6 @@
     <string name="empty_string"></string>
     <string name="sos">Show SOS map</string>
     <string name="history">History</string>
+    <string name="vehicle_max_speed">Is Oto Mode</string>
 
 </resources>

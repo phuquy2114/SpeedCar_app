@@ -1,7 +1,6 @@
 package com.speed.car.ui.main
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
@@ -10,7 +9,6 @@ import android.content.pm.PackageManager
 import android.location.*
 import android.location.LocationListener
 import android.os.Build
-import android.os.Bundle
 import android.os.Looper
 import android.text.SpannableString
 import android.text.style.RelativeSizeSpan
@@ -400,6 +398,16 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
                 viewModel.setEnableSoS(!isChecked)
                 switchId.setOnCheckedChangeListener { _, isCheck ->
                     viewModel.setEnableSoS(isCheck)
+                }
+            }
+            R.id.action_vehicle_max_speed -> {
+                val menuItem = binding.navigationDrawer.menu.findItem(R.id.action_vehicle_max_speed)
+                val switchId = menuItem.actionView as SwitchCompat
+                val isChecked = viewModel.isMotorMode.value ?: false
+                switchId.isChecked = !isChecked
+                viewModel.setTurnVehicleSpeed(!isChecked)
+                switchId.setOnCheckedChangeListener { _, isCheck ->
+                    viewModel.setTurnVehicleSpeed(isCheck)
                 }
             }
         }
