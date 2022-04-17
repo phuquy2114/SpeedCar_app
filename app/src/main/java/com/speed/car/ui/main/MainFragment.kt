@@ -157,6 +157,14 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
     override fun onStart() {
         super.onStart()
         onGrantPermissionNeeded()
+        tts = TextToSpeech(
+            requireActivity()
+        ) { status ->
+            if (status == TextToSpeech.SUCCESS) {
+                val textToSay = "Thiết bị đã được kết nối dữ liệu trên Ứng Dụng Team SPEED MOTOR"
+                tts?.speak(textToSay, TextToSpeech.QUEUE_ADD, null)
+            }
+        }
     }
 
     override fun onResume() {
@@ -201,22 +209,12 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
             Looper.getMainLooper()
         )
 
-        tts = TextToSpeech(
-            requireActivity()
-        ) { status ->
-            if (status == TextToSpeech.SUCCESS) {
-                val textToSay = "Thiết bị đã được kết nối dữ liệu trên Ứng Dụng Team SPEED MOTOR"
-                tts?.speak(textToSay, TextToSpeech.QUEUE_ADD, null)
-            }
-        }
     }
 
     override fun onPause() {
         super.onPause()
-
         mediaPlayer.stop()
         tts?.stop()
-        tts?.shutdown()
     }
 
     override fun onDestroy() {
