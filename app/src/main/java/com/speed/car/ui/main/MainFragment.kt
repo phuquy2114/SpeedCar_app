@@ -132,25 +132,22 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
                     }
                 }
 
-                var s = SpannableString(String.format("%.0f %s", maxSpeedTemp, speedUnits))
+                val s = SpannableString(String.format("%.0f %s", maxSpeedTemp, speedUnits))
                 s.setSpan(RelativeSizeSpan(0.5f), s.length - speedUnits.length - 1, s.length, 0)
-                // maxSpeed.setText(s)
-                viewModel.maxSpeed.postValue(Pair(maxSpeedTemp.toFloat(), s.toString()))
+                viewModel.maxSpeedView.postValue(s.toString())
 
-                var sVa = SpannableString(String.format("%.0f %s", averageTemp, speedUnits))
+                val sVa = SpannableString(String.format("%.0f %s", averageTemp, speedUnits))
                 sVa.setSpan(RelativeSizeSpan(0.5f), s.length - speedUnits.length - 1, s.length, 0)
-                // averageSpeed.setText(s)
-                viewModel.average.postValue(Pair(distanceTemp.toFloat(), sVa.toString()))
+                viewModel.avaView.postValue(sVa.toString())
 
-                var sDis = SpannableString(String.format("%.3f %s", distanceTemp, distanceUnits))
+                val sDis = SpannableString(String.format("%.3f %s", distanceTemp, distanceUnits))
                 sDis.setSpan(
                     RelativeSizeSpan(0.5f),
                     s.length - distanceUnits.length - 1,
                     s.length,
                     0
                 )
-                // distance.setText(s)
-                viewModel.distance.postValue(Pair(distanceTemp.toFloat(), sDis.toString()))
+                viewModel.distanceView.postValue(sDis.toString())
             }
 
         }

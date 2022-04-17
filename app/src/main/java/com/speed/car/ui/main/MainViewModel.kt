@@ -40,24 +40,10 @@ class MainViewModel(
         it.toString().ifEmpty { "--" }
     }
 
-    val maxSpeedView: LiveData<String> = maxSpeed.map {
-        it.second.ifBlank { "00" }
-    }
-
-
-    val distanceView: LiveData<String> = distance.map {
-        it.second.ifBlank { "00" }
-    }
-
-
-    val avaView: LiveData<String> = average.map {
-        it.second.ifBlank { "00" }
-    }
-
-
-    val accView: LiveData<String> = currentAcc.map {
-        it.second.ifBlank { "00" }
-    }
+    val maxSpeedView = MutableLiveData("00")
+    val distanceView = MutableLiveData("00")
+    val avaView = MutableLiveData("00")
+    val accView = MutableLiveData("00")
 
     var currentWayName: String? = null
 
@@ -102,6 +88,7 @@ class MainViewModel(
                 units = "m"
             }
             currentAcc.postValue(Pair(acc.toFloat(), units))
+            accView.postValue(units)
         }
 
         if (location.hasSpeed()) {
