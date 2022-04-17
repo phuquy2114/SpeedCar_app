@@ -10,6 +10,7 @@ import com.google.android.gms.maps.model.Marker
 import com.speed.car.core.BaseViewModel
 import com.speed.car.firestore.FirestoreRepository
 import com.speed.car.model.SOSPeople
+import com.speed.car.model.SpeedAddress
 import com.speed.car.utils.SharedPreferencesH
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -27,6 +28,8 @@ class MainViewModel(
     private var currentLocation: Location? = null
     val speedLimitCurrent = MutableLiveData<Int?>()
     val voiceRate = MutableLiveData<Boolean>(false)
+    val speedAddress = MutableLiveData<SpeedAddress>()
+
     val isOverSpeedLimit: LiveData<Pair<Boolean, Float>> = currentSpeed.map {
         val limit = speedLimitCurrent.value ?: return@map false to it.first
         (it.first > limit) to it.first
@@ -60,7 +63,7 @@ class MainViewModel(
         it.second.ifEmpty { "00" }
     }
 
-    private var currentWayName: String? = null
+    var currentWayName: String? = null
 
     var markers: List<Marker?> = listOf()
 
@@ -106,7 +109,7 @@ class MainViewModel(
                 }
             Log.d("xxx", "onLocationChangeSpeed: $speed")
             currentSpeed.postValue(Pair(speed.toFloat(), units))
-            val speedMotor = if (isMotorMode.value == true) 50f else 40f
+            val speedMotor = if (isMotorMode.value == true) 40f else 30f
             if (speed.toFloat() > speedLimitCurrentStr.value?.toFloat() ?: speedMotor) {
                 voiceRate.postValue(true)
             } else {
@@ -124,6 +127,7 @@ class MainViewModel(
             fireStoreRepository.getSpeedAddressByAddress(address = currentWayName ?: "").collectLatest {
                 Log.d("xxx", "response :$it ")
                 speedLimitCurrent.postValue(it?.maxSpeed)
+                speedAddress.postValue(it)
             }
         }
     }
