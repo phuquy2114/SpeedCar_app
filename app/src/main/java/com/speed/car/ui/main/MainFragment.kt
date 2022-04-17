@@ -51,7 +51,7 @@ import java.util.*
 
 class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), LocationListener,
     OnMapReadyCallback, NavigationView.OnNavigationItemSelectedListener {
-    private val defaultZoom = 20.0f
+    private val defaultZoom = 17.0f
     private var onGpsServiceUpdate: OnGpsServiceUpdate? = null
     private lateinit var mMap: GoogleMap
     private lateinit var mLocationManager: LocationManager
