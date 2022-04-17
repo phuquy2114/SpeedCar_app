@@ -222,12 +222,7 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
     }
 
     override fun onLocationChanged(location: Location) {
-        val addresses: List<Address>
-        val geocoder = Geocoder(this.context, Locale.getDefault())
-        addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
         viewModel.onLocationChangeSpeed(location)
-        Log.d("xxx", "address line ${addresses[0].getAddressLine(0)}")
-        Log.d("xxx", "address line ${addresses[0].thoroughfare}")
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -352,12 +347,15 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
 
     private fun markCurrentLocation(locationResult: LocationResult) {
         val lastLocation = locationResult.lastLocation
-        val addresses: List<Address>
+        val addresses: List<Address>?
         val geocoder = Geocoder(requireActivity(), Locale.getDefault())
-
-        addresses = geocoder.getFromLocation(lastLocation.latitude, lastLocation.longitude, 1)
-        addresses.first().thoroughfare?.let {
-            viewModel.checkSpeedLimit(it)
+        addresses = kotlin.runCatching {
+            geocoder.getFromLocation(lastLocation.latitude, lastLocation.longitude, 20)
+        }.getOrNull()
+        addresses?.map {
+            it.thoroughfare ?: ""
+        }?.filter { it.isNotEmpty() }?.let {
+            viewModel.checkSpeedLimit(it.first())
         }
         for (location in locationResult.locations) {
             with(location) {

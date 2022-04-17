@@ -68,10 +68,10 @@ class MainViewModel(
                 Log.d("xxx", "response :$it ")
             }
 
-            fireStoreRepository.getSpeedAddressByAddress(address = "Hùng Vương").collectLatest {
-                Log.d("xxx", "response :$it ")
-                speedLimitCurrent.postValue(it?.maxSpeed)
-            }
+//            fireStoreRepository.getSpeedAddressByAddress(address = "Hùng Vương").collectLatest {
+//                Log.d("xxx", "response :$it ")
+//                speedLimitCurrent.postValue(it?.maxSpeed)
+//            }
         }
     }
 
@@ -114,6 +114,10 @@ class MainViewModel(
         viewModelScope.launch {
             if (wayName != currentWayName) {
                 currentWayName = wayName
+            }
+            fireStoreRepository.getSpeedAddressByAddress(address = currentWayName ?: "").collectLatest {
+                Log.d("xxx", "response :$it ")
+                speedLimitCurrent.postValue(it?.maxSpeed)
             }
         }
     }
