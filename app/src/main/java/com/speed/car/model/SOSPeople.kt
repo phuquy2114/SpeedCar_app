@@ -11,6 +11,6 @@ data class SOSPeople(
     @PropertyName("address") val address: String = "",
     @PropertyName("image") val image: String = "",
     @PropertyName("phoneNumber") val phoneNumber: String = "",
-    @PropertyName("long") val long: Double = 0.0,
+    @PropertyName("lng") val lng: Double = 0.0,
     @PropertyName("lat") val lat: Double = 0.0
 ) : Parcelable

@@ -33,12 +33,15 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.Marker
+import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.material.navigation.NavigationView
 import com.speed.car.R
 import com.speed.car.core.BaseFragment
 import com.speed.car.databinding.FragmentMainBinding
 import com.speed.car.interfaces.OnGpsServiceUpdate
 import com.speed.car.model.Data
+import com.speed.car.model.SOSPeople
 import com.speed.car.notification.ChannelDetail
 import com.speed.car.notification.NotificationChannelType
 import com.speed.car.notification.NotificationContent
@@ -337,11 +340,8 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
         }
 
         viewModel.isEnableSOS.observe(viewLifecycleOwner) {
-            Toast.makeText(
-                context,
-                if (it) "is checked!!!" else "not checked!!!",
-                Toast.LENGTH_SHORT
-            ).show()
+            Log.d("xxx", "observers: ${viewModel.sosPeople.value}")
+            showSosMarker(viewModel.sosPeople.value ?: listOf())
         }
     }
 
@@ -445,5 +445,17 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
             tts?.speak("Bạn đã vượt quá tốc độ cho phép", TextToSpeech.ERROR_INVALID_REQUEST, null)
         else
             tts?.stop()
+    }
+
+    private fun showSosMarker(sosPeople: List<SOSPeople>) {
+        sosPeople.map {
+            val marker =  mMap.addMarker(MarkerOptions()
+                .position(LatLng(it.lng, it.lat))
+                .title(it.name))
+            marker?.tag = it.id
+            marker
+        }.let {
+            viewModel.markers = it
+        }
     }
 }

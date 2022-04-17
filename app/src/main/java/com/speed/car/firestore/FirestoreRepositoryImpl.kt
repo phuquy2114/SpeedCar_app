@@ -25,6 +25,17 @@ class FirestoreRepositoryImpl(
             }
     }.catch { emit(emptyList()) }
 
+    override suspend fun getSOSPeople(): Flow<List<SOSPeople>?> = flow {
+        fireStore.collection("SOSPeople")
+            .get()
+            .await()
+            .toListOrEmpty(SOSPeople::class.java) {
+                id = it.id
+            }.also {
+                emit(it)
+            }
+    }.catch { emit(emptyList()) }
+
     override suspend fun getSpeedAddressByAddress(address: String): Flow<SpeedAddress?> = flow {
         fireStore.collection("SpeedAddress")
             .whereEqualTo("address", address)
