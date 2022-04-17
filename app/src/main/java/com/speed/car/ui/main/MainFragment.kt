@@ -338,7 +338,7 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
 
         viewModel.speedAddress.observe(viewLifecycleOwner) {
             if (it.address != viewModel.currentWayName) {
-                val speedMotor = if (viewModel.isMotorMode.value == true) 50 else 40
+                val speedMotor = if (viewModel.isMotorMode.value == true) 40 else 30
                 tts?.speak(
                     "Bạn đang đi trên đường ${it.address} với tốc độ cho phép xe của bạn là $speedMotor",
                     TextToSpeech.QUEUE_ADD,
@@ -461,7 +461,7 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
                 NotificationChannelType.SPEED_CAR,
                 NotificationManager.IMPORTANCE_MAX
             )
-            val speedMotor = if (viewModel.isMotorMode.value == true) 50 else 40
+            val speedMotor = if (viewModel.isMotorMode.value == true) 40 else 30
             val notificationContent =
                 NotificationContent(
                     1234,
