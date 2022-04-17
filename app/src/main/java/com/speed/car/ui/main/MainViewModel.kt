@@ -30,6 +30,8 @@ class MainViewModel(
         (it.first > limit) to it.first
     }
 
+    val isEnableSOS = MutableLiveData(false)
+
     val isVisibleLimit = speedLimitCurrent.map {
         it != null
     }
@@ -108,5 +110,9 @@ class MainViewModel(
                 currentWayName = wayName
             }
         }
+    }
+
+    fun setEnableSoS(isEnable: Boolean) {
+        isEnableSOS.postValue(isEnable)
     }
 }

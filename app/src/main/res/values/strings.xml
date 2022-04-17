@@ -39,4 +39,10 @@
     <string name="dialog_location_permission_go_button">Go</string>
     <string name="dialog_location_permission_cancel_button">Cancel</string>
 
+    <string name="drawer_open">Open</string>
+    <string name="drawer_close">Close</string>
+    <string name="empty_string"></string>
+    <string name="sos">Show SOS map</string>
+    <string name="history">History</string>
+
 </resources>

@@ -10,18 +10,21 @@ import android.location.*
 import android.location.LocationListener
 import android.media.MediaPlayer
 import android.os.Build
+import android.os.Bundle
 import android.os.Looper
 import android.speech.tts.TextToSpeech
 import android.text.SpannableString
 import android.text.style.RelativeSizeSpan
 import android.util.Log
-import android.view.Menu
-import android.view.MenuInflater
 import android.view.MenuItem
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.ActionBarDrawerToggle
+import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.SwitchCompat
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.view.GravityCompat
 import androidx.navigation.fragment.findNavController
 import androidx.preference.PreferenceManager
 import com.google.android.gms.location.*
@@ -31,6 +34,7 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.material.navigation.NavigationView
 import com.speed.car.R
 import com.speed.car.core.BaseFragment
 import com.speed.car.databinding.FragmentMainBinding
@@ -47,7 +51,7 @@ import java.util.*
 
 
 class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), LocationListener,
-    OnMapReadyCallback {
+    OnMapReadyCallback, NavigationView.OnNavigationItemSelectedListener {
     private val defaultZoom = 20.0f
     private var onGpsServiceUpdate: OnGpsServiceUpdate? = null
     private lateinit var mMap: GoogleMap
@@ -75,12 +79,12 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
     override val viewModel: MainViewModel by viewModel()
 
     override fun getViewBinding(): FragmentMainBinding = FragmentMainBinding.inflate(layoutInflater)
+    private var mDrawerToggle: ActionBarDrawerToggle? = null
 
     override fun viewBinding() {
         setHasOptionsMenu(true)
         binding.viewModel = viewModel
-        binding.lifecycleOwner = this
-        initMap()
+        initViews()
         observers()
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(requireActivity())
         data = Data(onGpsServiceUpdate)
@@ -153,28 +157,6 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
         onGrantPermissionNeeded()
     }
 
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        inflater.inflate(R.menu.menu_toolbar, menu)
-
-        super.onCreateOptionsMenu(menu, inflater)
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        val id = item.itemId
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_history) {
-            findNavController().navigate(R.id.action_mainFragment_to_historyFragment)
-            return true
-        }
-//
-//      if(id == R.id.action_search){
-//          Toast.makeText(getApplicationContext(), "Search action is selected!", Toast.LENGTH_SHORT).show();
-//          return true;
-//      }
-        return super.onOptionsItemSelected(item)
-    }
-
     override fun onResume() {
         super.onResume()
         if (mLocationManager.allProviders.indexOf(LocationManager.GPS_PROVIDER) >= 0) {
@@ -193,7 +175,7 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
             Log.w(
                 "MainActivity",
                 "No GPS location provider found. GPS data display will not be available."
-            );
+            )
         }
 
         if (!mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
@@ -241,10 +223,8 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
     }
 
     override fun onLocationChanged(location: Location) {
-        val geocoder: Geocoder
         val addresses: List<Address>
-        geocoder = Geocoder(this.context, Locale.getDefault())
-
+        val geocoder = Geocoder(this.context, Locale.getDefault())
         addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
         viewModel.onLocationChangeSpeed(location)
         Log.d("xxx", "address line ${addresses[0].getAddressLine(0)}")
@@ -252,6 +232,16 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
 
 
         tts.speak("Bạn đã vượt quá tốc độ cho phép", TextToSpeech.ERROR_INVALID_REQUEST, null)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            android.R.id.home -> {
+                binding.drawerLayout.openDrawer(GravityCompat.START)
+                return true
+            }
+        }
+        return super.onOptionsItemSelected(item)
     }
 
     private fun onGrantPermissionNeeded() {
@@ -311,10 +301,28 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
         getDeviceLocation()
     }
 
-    private fun initMap() {
+    private fun initViews() {
+        setHasOptionsMenu(true)
         val mapFragment =
             childFragmentManager.findFragmentById(R.id.mapFragment) as SupportMapFragment
         mapFragment.getMapAsync(this)
+        (requireActivity() as? AppCompatActivity)?.let {
+            it.supportActionBar?.apply {
+                setDisplayHomeAsUpEnabled(true)
+            }
+        }
+        mDrawerToggle = ActionBarDrawerToggle(
+            requireActivity(),
+            binding.drawerLayout,
+            R.string.drawer_open,
+            R.string.drawer_close
+        )
+        mDrawerToggle?.syncState()
+        binding.drawerLayout.addDrawerListener(mDrawerToggle!!)
+        binding.navigationDrawer.apply {
+            setNavigationItemSelectedListener(this@MainFragment)
+            bringToFront()
+        }
     }
 
     private fun observers() {
@@ -331,6 +339,13 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
                     NotificationContent(1234, "Speed Warning", "Your current speed is ${it.second}")
                 notificationRepository.sendNotification(channelDetail, notificationContent)
             }
+        }
+        viewModel.isEnableSOS.observe(viewLifecycleOwner) {
+            Toast.makeText(
+                context,
+                if (it) "is checked!!!" else "not checked!!!",
+                Toast.LENGTH_SHORT
+            ).show()
         }
     }
 
@@ -396,5 +411,23 @@ class MainFragment : BaseFragment<MainViewModel, FragmentMainBinding>(), Locatio
 
     private fun showGpsDisabledDialog() {
         startActivity(Intent("android.settings.LOCATION_SOURCE_SETTINGS"))
+    }
+
+    override fun onNavigationItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.action_history -> findNavController().navigate(R.id.historyFragment)
+            R.id.action_sos -> {
+                val menuItem = binding.navigationDrawer.menu.findItem(R.id.action_sos)
+                val switchId = menuItem.actionView as SwitchCompat
+                val isChecked = viewModel.isEnableSOS.value ?: false
+                switchId.isChecked = !isChecked
+                viewModel.setEnableSoS(!isChecked)
+                switchId.setOnCheckedChangeListener { _, isCheck ->
+                    viewModel.setEnableSoS(isCheck)
+                }
+            }
+        }
+        binding.drawerLayout.closeDrawer(GravityCompat.START)
+        return true
     }
 }

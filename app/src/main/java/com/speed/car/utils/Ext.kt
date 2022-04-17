@@ -1,11 +1,13 @@
 package com.speed.car.utils
 
 import android.view.View
+import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.BindingAdapter
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.QuerySnapshot
 import java.text.SimpleDateFormat
 import java.util.*
+import androidx.fragment.app.Fragment
 
 fun Any?.isNotNull(): Boolean = this != null
 fun Any?.isNull(): Boolean = this == null
