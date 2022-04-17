@@ -2,10 +2,7 @@ package com.speed.car.ui.main
 
 import android.location.Location
 import android.util.Log
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.map
-import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.*
 import com.google.android.gms.maps.model.Marker
 import com.speed.car.core.BaseViewModel
 import com.speed.car.firestore.FirestoreRepository
@@ -35,7 +32,6 @@ class MainViewModel(
         (it.first > limit) to it.first
     }
 
-    val isEnableSOS = MutableLiveData(false)
     val isMotorMode = MutableLiveData(false)
     val isVisibleLimit = speedLimitCurrent.map {
         it != null
@@ -67,7 +63,17 @@ class MainViewModel(
 
     var markers: List<Marker?> = listOf()
 
-    val sosPeople = MutableLiveData<List<SOSPeople>>()
+    private val sosPeople = MutableLiveData<List<SOSPeople>>()
+    private val isEnableSOS = MutableLiveData(false)
+    val combineSettingAndDataSOS = MediatorLiveData<Pair<Boolean, List<SOSPeople>?>>().apply {
+        addSource(isEnableSOS) {
+            value = Pair(it, sosPeople.value)
+        }
+
+        addSource(sosPeople) {
+            value = Pair(isEnableSOS.value ?: false, it)
+        }
+    }
 
     init {
         launchCoroutine {
